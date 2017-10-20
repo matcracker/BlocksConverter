@@ -1,0 +1,24 @@
+name: BlocksConverter
+version: 1.0
+api: [3.0.0-ALPHA9]
+author: matcracker
+main: matcracker\BlocksConverter\Loader
+
+commands:
+  convertqueue:
+    aliases: ["cq"]
+    usage: "§6/convertqueue <add|remove|status> <levelname|all>"
+    permission: blocksconverter.commands.convertqueue
+  convert:
+    usage: "§6/convert <levelname|queue> [backup]"
+    permission: blocksconverter.commands.convert
+
+permissions:
+  blocksconverter.commands:
+    description: Allows using all plugin commands
+    default: op
+    children:
+      blocksconverter.commands.convertqueue:
+        description: Allows using /convertqueue command
+      blocksconverter.commands.convert:
+        description: Allows using /convert command

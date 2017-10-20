@@ -1,0 +1,30 @@
+---
+settings:
+  chunk-radius: 10 #It's an addition chunks loading from the world spawn.
+
+blocks:
+  44-1:
+    converted-id: 158
+    converted-data: 0
+  44-7: #The (block's ID - data) to be converted
+    converted-id: 44 #The block's ID of replaced block
+    converted-data: 6
+  125-0: #Dropper
+    converted-id: 157
+    converted-data: 1
+  126-0: #Activator Rail
+    converted-id: 44
+    converted-data: 1
+  166-0: #MCPC Barrier
+    converted-id: 95
+    converted-data: 0
+  188-0: #MCPC Repeating command block
+    converted-id: 85
+    converted-data: 1
+  189-0: #MCPC Command block
+    converted-id: 85 #Birch fence
+    converted-data: 2
+  191: #MCPC Dark oak fence
+    converted-id: 85
+    converted-data: 5
+...
