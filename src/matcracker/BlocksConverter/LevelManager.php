@@ -7,7 +7,6 @@ namespace matcracker\BlocksConverter;
 use pocketmine\block\Block;
 use pocketmine\level\format\EmptySubChunk;
 use pocketmine\level\Level;
-use pocketmine\utils\TextFormat;
 
 class LevelManager
 {
@@ -33,11 +32,11 @@ class LevelManager
 
     public function backup() : void
     {
-        $this->loader->getLogger()->debug(TextFormat::GOLD . "Creating a backup of " . $this->level->getName());
+        $this->loader->getLogger()->debug(Utils::translateColors("§6Creating a backup of " . $this->level->getName()));
         $srcPath = $this->loader->getServer()->getDataPath() . "/worlds/" . $this->level->getFolderName();
         $destPath = $this->loader->getDataFolder() . "/backups/" . $this->level->getFolderName();
         Utils::copyDirectory($srcPath, $destPath);
-        $this->loader->getLogger()->debug(TextFormat::GREEN . "Backup successfully created!");
+        $this->loader->getLogger()->debug(Utils::translateColors("§aBackup successfully created!"));
     }
 
     public function restore() : void
@@ -128,46 +127,54 @@ class LevelManager
                 $this->loader->getLogger()->warning("The level " . $this->level->getName() . " will be converted without a backup.");
             }
 
-            $this->loader->getLogger()->debug(TextFormat::GOLD . "Starting level " . $this->level->getName() . "'s conversion...");
+            $this->loader->getLogger()->debug(Utils::translateColors("§6Starting level " . $this->level->getName() . "'s conversion..."));
+            foreach ($this->loader->getServer()->getOnlinePlayers() as $player) {
+                $player->kick("The server is running a world conversion, try to join later.", false);
+            }
+
             $this->converting = true;
-            $this->loadChunks($this->loader->getChunkRadius());
+            try {
+                $this->loadChunks($this->loader->getChunkRadius());
 
-            foreach ($this->level->getChunks() as $chunk) {
-                $cx = $chunk->getX() << 4;
-                $cz = $chunk->getZ() << 4;
-                for ($y = 0; $y < $chunk->getMaxY(); $y++) {
-                    $subChunk = $chunk->getSubChunk($y >> 4);
-                    if (!($subChunk instanceof EmptySubChunk)) {
-                        for ($x = $cx; $x < $cx + 16; $x++) {
-                            for ($z = $cz; $z < $cz + 16; $z++) {
-                                $blockId = $this->level->getBlockIdAt($x, $y, $z);
-                                if ($blockId !== Block::AIR) {
-                                    $blockData = $this->level->getBlockDataAt($x, $y, $z);
-                                    foreach (array_keys($this->loader->getBlocksData()) as $blockVal) {
-                                        $split = explode("-", $blockVal);
-                                        $configId = (int)$split[0];
-                                        $configData = (int)$split[1];
+                foreach ($this->level->getChunks() as $chunk) {
+                    $changed = false;
+                    for ($y = 0; $y < $chunk->getMaxY(); $y++) {
+                        $subChunk = $chunk->getSubChunk($y >> 4);
+                        if (!($subChunk instanceof EmptySubChunk)) {
+                            for ($x = 0; $x < 16; $x++) {
+                                for ($z = 0; $z < 16; $z++) {
+                                    $blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
+                                    if ($blockId !== Block::AIR) {
+                                        $blockData = $subChunk->getBlockData($x, $y & 0x0f, $z);
+                                        foreach (array_keys($this->loader->getBlocksData()) as $blockVal) {
+                                            $split = explode("-", $blockVal);
+                                            $configId = (int)$split[0];
+                                            $configData = (int)$split[1];
 
-                                        if ($blockId === $configId && ($blockData === $configData || $configData === self::IGNORE_DATA_VALUE)) {
-                                            $newId = (int)$this->loader->getBlocksConfig()->getNested("blocks." . $blockVal . ".converted-id");
-                                            $newData = (int)$this->loader->getBlocksConfig()->getNested("blocks." . $blockVal . ".converted-data");
-
-                                            $this->level->setBlockIdAt($x, $y, $z, $newId);
-                                            $this->level->setBlockDataAt($x, $y, $z, $newData);
-                                            $convertedBlocks++;
+                                            if ($blockId === $configId && ($blockData === $configData || $configData === self::IGNORE_DATA_VALUE)) {
+                                                $newId = (int)$this->loader->getBlocksConfig()->getNested("blocks." . $blockVal . ".converted-id");
+                                                $newData = (int)$this->loader->getBlocksConfig()->getNested("blocks." . $blockVal . ".converted-data");
+                                                $subChunk->setBlock($x, $y & 0x0f, $z, $newId, $newData);
+                                                $changed = true;
+                                                $convertedBlocks++;
+                                            }
                                         }
                                     }
                                 }
                             }
+                            $subChunksAnalyzed++;
                         }
-                        $subChunksAnalyzed++;
                     }
+                    $chunk->setChanged($changed);
+                    $chunksAnalyzed++;
                 }
 
-                $chunksAnalyzed++;
+                $this->level->save(true);
+            } catch (\ErrorException $e) {
+                $this->loader->getLogger()->critical($e);
+                $status = false;
             }
 
-            $this->level->save(true);
             $this->converting = false;
             $this->loader->getLogger()->debug("Conversion finished! Printing full report...");
 
