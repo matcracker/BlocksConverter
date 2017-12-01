@@ -1,3 +1,7 @@
+[![ ](https://poggit.pmmp.io/shield.state/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
+[![ ](https://poggit.pmmp.io/shield.api/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
+[![ ](https://poggit.pmmp.io/shield.dl.total/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
+
 # BlocksConverter
 BlocksConverter is a **PocketMine-MP plugin** that allows you to convert block IDs and datas to another type. For example, if you need to import a Minecraft Java Edition world, you can use it for convert to a Minecraft: BE world!
 
