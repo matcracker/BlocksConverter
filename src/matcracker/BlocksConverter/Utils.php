@@ -36,7 +36,7 @@ class Utils
             $reflection = new \ReflectionClass(TextFormat::class);
             return array_change_key_case($reflection->getConstants(), CASE_LOWER);
         } catch (\ReflectionException $e) {
-            echo $e->getMessage();
+            Loader::getInstance()->getLogger()->error($e->getMessage());
         }
         return array();
     }
