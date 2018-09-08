@@ -12,11 +12,18 @@ use pocketmine\utils\Config;
 
 class Loader extends PluginBase
 {
+    private static $instance;
     /**@var Config $blockConfig */
     private $blockConfig;
+    
+    public static function getInstance(): Loader
+    {
+        return self::$instance;
+    }
 
     public function onEnable()
     {
+        self::$instance = $this;
         if (!file_exists($this->getDataFolder())) {
             @mkdir($this->getDataFolder());
         }
