@@ -7,12 +7,12 @@ BlocksConverter is a **PocketMine-MP plugin** that allows you to convert block I
 
 ## Commands
 - **/convertqueue <add|remove|status> [levelName|all] (Permission: blocksconverter.commands.convertqueue)**
-  - **/cq add <levelname|all>**: It adds one or all worlds/levels in queue before the conversion.
-  - **/cq remove <levelname|all>**: It removes one or all worlds/levels from the queue.
+  - **/cq add <levelname|all>**: It adds one or all loaded worlds/levels in queue before the conversion.
+  - **/cq remove <levelname|all>**: It removes one or all loaded worlds/levels from the queue.
   - **/cq status**: It shows the status of current queue.
 - **/convert <levelname|queue> [backup=true|false] (Permission: blocksconverter.commands.convert)**
-  - **/convert levelname [backup=true|false]**: It directly convert a world/level and it optionally runs a backup (by default is true)
-  - **/convert queue [backup=true|false]**: It starts to convert all the worlds/levels in queue.
+  - **/convert [levelname] [backup=true|false]**: It directly convert a loaded world/level (without quotes!) and it optionally runs a backup (by default is true)
+  - **/convert queue [backup=true|false]**: It starts to convert all the loaded worlds/levels in queue.
 
 ## Configuration file
 ```yaml
@@ -22,9 +22,9 @@ settings:
 
 #This is the section for setup the blocks to be converted in all queued worlds
 blocks:
-  <id>-<metadata>: #The ID and data of block that need to be replaced (usually it should be the MC:PC ID)
-    converted-id: <new_id> #The new block ID (usually it should be the MC:BE ID)
-    converted-data: <new_metadata> #The new block data
+  <id>-<metadata>: #The ID and data of block that need to be replaced 
+    converted-id: <new_id> #The correct corresponding block ID.
+    converted-data: <new_metadata> #The correct corresponding block data.
   #Examples
   44-1:
     converted-id: 158
