@@ -9,32 +9,32 @@ class LevelQueue
     /**@var LevelManager[] $queue */
     private static $queue = [];
 
-    public static function addInQueue(LevelManager $levelManager) : void
+    public static function addInQueue(LevelManager $levelManager): void
     {
         self::$queue[$levelManager->getLevel()->getName()] = $levelManager;
     }
 
-    public static function isEmpty() : bool
+    public static function isEmpty(): bool
     {
         return empty(self::$queue);
     }
 
-    public static function isInQueue(string $levelName) : bool
-    {
-        return isset(self::$queue[$levelName]);
-    }
-
-    public static function removeFromQueue(string $levelName) : void
+    public static function removeFromQueue(string $levelName): void
     {
         if (self::isInQueue($levelName)) {
             unset(self::$queue[$levelName]);
         }
     }
 
+    public static function isInQueue(string $levelName): bool
+    {
+        return isset(self::$queue[$levelName]);
+    }
+
     /**
      * @return LevelManager[]
      */
-    public static function getQueue() : array
+    public static function getQueue(): array
     {
         return self::$queue;
     }

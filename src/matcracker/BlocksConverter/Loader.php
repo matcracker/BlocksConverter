@@ -31,7 +31,6 @@ class Loader extends PluginBase
             ],
             "blocks" => []
         ]);
-
         $this->blockConfig->save();
 
         $this->getLogger()->info(Utils::translateColors("§a" . $this->getDescription()->getName() . " v" . $this->getDescription()->getVersion() . " enabled!"));
@@ -42,7 +41,7 @@ class Loader extends PluginBase
         $this->getLogger()->info(Utils::translateColors("§c" . $this->getDescription()->getName() . " successfully disabled"));
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
     {
         $name = strtolower($command->getName());
         if ($name === "convertqueue") {
@@ -57,7 +56,7 @@ class Loader extends PluginBase
                 $levelNames = [];
 
                 if (strtolower($levelOption) === "all") {
-                    $levelNames = array_map(function (Level $level) : string {
+                    $levelNames = array_map(function (Level $level): string {
                         return $level->getName();
                     }, $this->getServer()->getLevels());
                 } else {
@@ -156,7 +155,7 @@ class Loader extends PluginBase
         return false;
     }
 
-    public function getBlocksConfig() : Config
+    public function getBlocksConfig(): Config
     {
         return $this->blockConfig;
     }
@@ -166,7 +165,7 @@ class Loader extends PluginBase
         return $this->blockConfig->get("blocks");
     }
 
-    public function getChunkRadius() : int
+    public function getChunkRadius(): int
     {
         return (int)$this->blockConfig->getNested("settings.chunk-radius");
     }
