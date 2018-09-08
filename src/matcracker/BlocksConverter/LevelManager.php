@@ -178,8 +178,6 @@ class LevelManager
 
             $this->loader->getLogger()->info(Utils::translateColors($report));
         }
-
-
     }
 
     private function startAnalysis(): array
