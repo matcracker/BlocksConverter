@@ -89,8 +89,6 @@ class WorldManager
 		$status = true;
 		$chunksAnalyzed = $subChunksAnalyzed = $convertedBlocks = $convertedSigns = 0;
 
-		$conversionStart = microtime(true);
-
 		if (!$this->hasBackup()) {
 			$this->loader->getLogger()->warning("The world \"{$this->world->getName()}\" will be converted without a backup.");
 		}
@@ -100,13 +98,13 @@ class WorldManager
 		}
 
 		$this->loader->getLogger()->debug("Starting world \"{$this->world->getName()}\" conversion...");
-
+		$conversionStart = microtime(true);
 		$this->isConverting = true;
-		$totalChunks = $this->countChunks();
 		try {
-			$this->loader->getLogger()->debug("Loading {$totalChunks} chunks...");
+			$this->loader->getLogger()->debug("Loading chunks...");
+			$totalChunks = $this->countChunks();
 			$chunks = $this->loadAllChunks(true);
-			$this->loader->getLogger()->debug("Chunks loaded.");
+			$this->loader->getLogger()->debug("Loaded {$totalChunks} chunks.");
 			$blocksMap = BlocksMap::get();
 
 			$chunkTime = microtime(true);
