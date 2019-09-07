@@ -3,54 +3,18 @@
 [![ ](https://poggit.pmmp.io/shield.dl.total/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
 
 # BlocksConverter
-BlocksConverter is a **PocketMine-MP plugin** that allows you to convert block IDs and datas to another type. For example, if you need to import a Minecraft Java Edition world, you can use it for convert to a Minecraft: BE world!
+BlocksConverter is a **PocketMine-MP plugin** that allows you to translate blocks from MC: Java Edition to MCPE.
 
 ## Commands
-- **/convertqueue <add|remove|status> [levelName|all] (Permission: blocksconverter.commands.convertqueue)**
-  - **/cq add <levelname|all>**: It adds one or all loaded worlds/levels in queue before the conversion.
-  - **/cq remove <levelname|all>**: It removes one or all loaded worlds/levels from the queue.
+- **/convertqueue <add|remove|status> [world_name|all] (Permission: blocksconverter.command.convertqueue)**
+  - **/cq add <world_name|all>**: It adds one or all worlds in queue before the conversion.
+  - **/cq remove <world_name|all>**: It removes one or all worlds from the queue.
   - **/cq status**: It shows the status of current queue.
-- **/convert <levelname|queue> [backup=true|false] (Permission: blocksconverter.commands.convert)**
-  - **/convert [levelname] [backup=true|false]**: It directly convert a loaded world/level (without quotes!) and it optionally runs a backup (by default is true)
-  - **/convert queue [backup=true|false]**: It starts to convert all the loaded worlds/levels in queue.
-
-## Configuration file
-```yaml
----
-settings:
-  chunk-radius: 10 #It loads all the chunks in the specific radius (starting point is world spawn) and it allows to convert more blocks in the map.
-
-#This is the section for setup the blocks to be converted in all queued worlds
-blocks:
-  <id>-<metadata>: #The ID and data of block that need to be replaced 
-    converted-id: <new_id> #The correct corresponding block ID.
-    converted-data: <new_metadata> #The correct corresponding block data.
-  #Examples
-  44-1:
-    converted-id: 158
-    converted-data: 0
-  44-7:
-    converted-id: 44
-    converted-data: 6
-  125-0: #Dropper
-    converted-id: 157
-    converted-data: 1
-  126-0: #Activator Rail
-    converted-id: 44
-    converted-data: 1
-  166-0: #MCPC Barrier
-    converted-id: 95
-    converted-data: 0
-  188-0: #MCPC Repeating command block
-    converted-id: 85
-    converted-data: 1
-  189-0: #MCPC Command block
-    converted-id: 85 #Birch fence
-    converted-data: 2
-  191: #MCPC Dark oak fence
-    converted-id: 85
-    converted-data: 5
-...
-```
+- **/convert <world_name|queue> [backup=true|false] (Permission: blocksconverter.command.convert)**
+  - **/convert [world_name] [backup=true|false]**: It directly convert a world (without quotes!) and it optionally runs a backup (by default is true)
+  - **/convert queue [backup=true|false]**: It starts to convert all the worlds in queue.
+- **/toolblock (Permission: blocksconverter.command.toolblock)**
+  - Allows to show information about the block you are targetting. (Useful to detect the block ID to replace with).
+  
 ## Important
 This plugin could take some time before the conversion isn't finished. While the conversion, **don't** try to stop or turn off the server until it's finished.
