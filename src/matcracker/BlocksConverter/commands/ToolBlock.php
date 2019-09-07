@@ -25,6 +25,11 @@ final class ToolBlock extends Command
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
 	{
+		if (!$sender->hasPermission("blocksconverter.command.toolblock")) {
+			$sender->sendMessage(TextFormat::RED . "You don't have permission to run this command!");
+			return false;
+		}
+
 		if (!($sender instanceof Player)) {
 			$sender->sendMessage(TextFormat::RED . "You must run this command in-game.");
 			return false;
