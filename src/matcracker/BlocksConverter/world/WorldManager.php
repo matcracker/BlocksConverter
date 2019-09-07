@@ -108,6 +108,8 @@ class WorldManager
 			$blocksMap = BlocksMap::get();
 
 			$chunkTime = microtime(true);
+			$cx = $cz = PHP_INT_MAX;
+
 			/**@var Chunk $chunk */
 			foreach ($chunks as $chunk) {
 				$hasChanged = false;
@@ -124,29 +126,25 @@ class WorldManager
 								continue;
 							}
 
-							if ($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) {
-								$tile = $this->world->getTileAt($x, $y, $z);
-								if ($tile instanceof Sign) {
-									$convertedSigns++;
-									$colors = Utils::getTextFormatColors();
-									for ($i = 0; $i < 4; $i++) {
-										$s = $tile->getLine($i);
-										$str = "";
-										if (strpos($s, "[") !== false) {
-											$data = json_decode($s, true)["extra"][0];
-											if (is_array($data)) {
-												if (array_key_exists("bold", $data)) {
-													$str .= TextFormat::BOLD;
+							if (($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && ($cx !== $chunk->getX() && $cz !== $chunk->getZ())) {
+								$cx = $chunk->getX();
+								$cz = $chunk->getZ();
+								$this->loader->getLogger()->debug("Found a chunk({$cx};{$cz}) containing signs...");
+								foreach ($this->world->getChunkTiles($cx, $cz) as $tile) {
+									if ($tile instanceof Sign) {
+										$convertedSigns++;
+										$colors = Utils::getTextFormatColors();
+										for ($i = 0; $i < 4; $i++) {
+											$data = json_decode($tile->getLine($i), true);
+											$line = "";
+											if (isset($data["extra"])) {
+												foreach ($data["extra"] as $extraData) {
+													$line .= $colors[$extraData["color"]] . $extraData["text"];
 												}
-												if (array_key_exists("color", $data)) {
-													$str .= $colors[$data["color"]];
-												}
-												$str .= json_decode('"' . $data["text"] . '"');
-											} else {
-												$str = json_decode('"' . $data . '"');
 											}
+											$line .= $data["text"];
+											$tile->setLine($i, $line);
 										}
-										$tile->setLine($i, $str);
 										$hasChanged = true;
 									}
 								}
@@ -180,12 +178,12 @@ class WorldManager
 					$chunkTime = microtime(true);
 				}
 			}
-
 			$this->world->save(true);
 		} catch (Exception $e) {
 			$this->loader->getLogger()->critical($e);
 			$status = false;
 		}
+
 
 		$this->isConverting = false;
 		$this->loader->getLogger()->debug("Conversion finished! Printing full report...");

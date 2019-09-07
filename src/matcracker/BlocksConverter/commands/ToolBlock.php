@@ -29,6 +29,7 @@ final class ToolBlock extends Command
 			$sender->sendMessage(TextFormat::RED . "You must run this command in-game.");
 			return false;
 		}
+
 		$senderName = $sender->getName();
 		if (self::removePlayer($sender)) {
 			$sender->sendMessage(TextFormat::RED . "ToolBlock disabled.");

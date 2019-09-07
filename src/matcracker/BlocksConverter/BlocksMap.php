@@ -65,7 +65,13 @@ final class BlocksMap
 		],
 		BlockIds::CHAIN_COMMAND_BLOCK => [
 			[BlockIds::FENCE, 2]
+		],
+		BlockIds::END_ROD => [
+			[BlockIds::GRASS_PATH, 0]
 		]
+		/*166 => [
+			[416, 0] //MC-PE Barrier
+		]*/
 	];
 
 	public static function load(): void
