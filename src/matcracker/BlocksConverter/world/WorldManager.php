@@ -118,7 +118,6 @@ class WorldManager
 					if ($subChunk instanceof EmptySubChunk) {
 						continue;
 					}
-
 					for ($x = 0; $x < 16; $x++) {
 						for ($z = 0; $z < 16; $z++) {
 							$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
@@ -139,7 +138,7 @@ class WorldManager
 											$line = "";
 											if (isset($data["extra"])) {
 												foreach ($data["extra"] as $extraData) {
-													$line .= $colors[$extraData["color"]] . $extraData["text"];
+													$line .= $colors[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
 												}
 											}
 											$line .= $data["text"];

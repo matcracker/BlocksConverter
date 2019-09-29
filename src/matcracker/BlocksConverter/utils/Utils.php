@@ -14,7 +14,7 @@ class Utils
 		$dir = opendir($src);
 		@mkdir($dst);
 		while (($file = readdir($dir)) !== false) {
-			if (($file !== ".") && ($file !== "..")) {
+			if ($file !== "." && $file !== "..") {
 				if (is_dir($src . DIRECTORY_SEPARATOR . $file)) {
 					self::recursiveCopyDirectory($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
 				} else {
