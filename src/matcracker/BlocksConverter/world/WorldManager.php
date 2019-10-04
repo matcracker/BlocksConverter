@@ -134,14 +134,18 @@ class WorldManager
 										$convertedSigns++;
 										$colors = Utils::getTextFormatColors();
 										for ($i = 0; $i < 4; $i++) {
-											$data = json_decode($tile->getLine($i), true);
 											$line = "";
-											if (isset($data["extra"])) {
-												foreach ($data["extra"] as $extraData) {
-													$line .= $colors[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
+											$data = json_decode($tile->getLine($i), true);
+											if (is_array($data)) {
+												if (isset($data["extra"])) {
+													foreach ($data["extra"] as $extraData) {
+														$line .= $colors[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
+													}
 												}
+												$line .= $data["text"] ?? "";
+											} else {
+												$line = (string)$data;
 											}
-											$line .= $data["text"];
 											$tile->setLine($i, $line);
 										}
 										$hasChanged = true;
