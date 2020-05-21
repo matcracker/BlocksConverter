@@ -12,9 +12,8 @@ use pocketmine\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
-final class ToolBlock extends Command
-{
-	/**@var Player[] $players */
+final class ToolBlock extends Command implements PluginIdentifiableCommand{
+	/**@var Player[] */
 	private static $players = [];
 	/** @var Loader */
 	private $loader;
@@ -28,22 +27,30 @@ final class ToolBlock extends Command
 		$this->loader = $loader;
 	}
 
-	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
-	{
-		if (!$sender->hasPermission("blocksconverter.command.toolblock")) {
+	/**
+	 * @return Player[]
+	 */
+	public static function getPlayers() : array{
+		return self::$players;
+	}
+
+	public function execute(CommandSender $sender, string $commandLabel, array $args) : bool{
+		if(!$sender->hasPermission("blocksconverter.command.toolblock")){
 			$sender->sendMessage(TextFormat::RED . "You don't have permission to run this command!");
+
 			return false;
 		}
 
-		if (!($sender instanceof Player)) {
+		if(!($sender instanceof Player)){
 			$sender->sendMessage(TextFormat::RED . "You must run this command in-game.");
+
 			return false;
 		}
 
 		$senderName = $sender->getName();
-		if (self::removePlayer($sender)) {
+		if(self::removePlayer($sender)){
 			$sender->sendMessage(TextFormat::RED . "ToolBlock disabled.");
-		} else {
+		}else{
 			self::$players[$senderName] = $sender;
 			$sender->sendMessage(TextFormat::GREEN . "ToolBlock enabled.");
 		}
@@ -51,20 +58,13 @@ final class ToolBlock extends Command
 		return true;
 	}
 
-	/**
-	 * @return Player[]
-	 */
-	public static function getPlayers(): array
-	{
-		return self::$players;
-	}
-
-	public static function removePlayer(Player $player): bool
-	{
-		if (array_key_exists($player->getName(), self::$players)) {
+	public static function removePlayer(Player $player) : bool{
+		if(array_key_exists($player->getName(), self::$players)){
 			unset(self::$players[$player->getName()]);
+
 			return true;
 		}
+
 		return false;
 	}
 

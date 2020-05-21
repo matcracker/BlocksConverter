@@ -7,17 +7,15 @@ use pocketmine\utils\TextFormat;
 use ReflectionClass;
 use ReflectionException;
 
-class Utils
-{
-	public static function recursiveCopyDirectory(string $src, string $dst): void
-	{
+class Utils{
+	public static function recursiveCopyDirectory(string $src, string $dst) : void{
 		$dir = opendir($src);
 		@mkdir($dst);
-		while (($file = readdir($dir)) !== false) {
-			if ($file !== "." && $file !== "..") {
-				if (is_dir($src . DIRECTORY_SEPARATOR . $file)) {
+		while(($file = readdir($dir)) !== false){
+			if($file !== "." && $file !== ".."){
+				if(is_dir($src . DIRECTORY_SEPARATOR . $file)){
 					self::recursiveCopyDirectory($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
-				} else {
+				}else{
 					copy($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
 				}
 			}
@@ -25,14 +23,15 @@ class Utils
 		closedir($dir);
 	}
 
-	public static function getTextFormatColors(): array
-	{
-		try {
+	public static function getTextFormatColors() : array{
+		try{
 			$reflection = new ReflectionClass(TextFormat::class);
+
 			return array_change_key_case($reflection->getConstants(), CASE_LOWER);
-		} catch (ReflectionException $e) {
+		}catch(ReflectionException $e){
 			//Loader::getInstance()->getLogger()->error($e->getMessage());
 		}
+
 		return array();
 	}
 }

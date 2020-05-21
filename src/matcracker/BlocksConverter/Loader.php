@@ -12,17 +12,14 @@ use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\PluginBase;
 
-final class Loader extends PluginBase implements Listener
-{
+final class Loader extends PluginBase implements Listener{
 
-	public function onLoad(): void
-	{
+	public function onLoad() : void{
 		@mkdir($this->getDataFolder() . "/backups", 0777, true);
 		BlocksMap::load();
 	}
 
-	public function onEnable(): void
-	{
+	public function onEnable() : void{
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		$this->getServer()->getCommandMap()->register('blocksconverter', new Convert($this));
 		$this->getServer()->getCommandMap()->register('blocksconverter', new ConvertQueue($this));
@@ -31,13 +28,11 @@ final class Loader extends PluginBase implements Listener
 		$this->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
 	}
 
-	public function onPlayerQuit(PlayerQuitEvent $event): void
-	{
+	public function onPlayerQuit(PlayerQuitEvent $event) : void{
 		ToolBlock::removePlayer($event->getPlayer());
 	}
 
-	public function onDisable(): void
-	{
+	public function onDisable() : void{
 		$this->getScheduler()->cancelAllTasks();
 	}
 }

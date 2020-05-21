@@ -6,8 +6,7 @@ namespace matcracker\BlocksConverter;
 
 use pocketmine\block\BlockIds;
 
-final class BlocksMap
-{
+final class BlocksMap{
 	private static $MAP = [
 		BlockIds::DOUBLE_STONE_SLAB => [
 			6 => [BlockIds::DOUBLE_STONE_SLAB, 7],
@@ -74,34 +73,33 @@ final class BlocksMap
 		]*/
 	];
 
-	public static function load(): void
-	{
+	public static function load() : void{
 		$tempArr = [];
-		for ($i = 1, $j = 5; $i <= 5; $i++, $j--) {
+		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
 			$tempArr[$i] = [BlockIds::STONE_BUTTON, $j];
 		}
 		self::$MAP[BlockIds::STONE_BUTTON] = $tempArr;
 
 		$tempArr = [];
-		for ($i = 1, $j = 5; $i <= 5; $i++, $j--) {
+		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
 			$tempArr[$i] = [BlockIds::WOODEN_BUTTON, $j];
 		}
 		self::$MAP[BlockIds::WOODEN_BUTTON] = $tempArr;
 
 		$tempArr = [];
-		for ($i = 0; $i <= 15; $i++) {
+		for($i = 0; $i <= 15; $i++){
 			$tempArr[$i] = [BlockIds::STAINED_GLASS, $i];
 		}
 		self::$MAP[BlockIds::INVISIBLE_BEDROCK] = $tempArr;
 
 		$tempArr = [];
-		for ($i = 0; $i <= 5; $i++) {
+		for($i = 0; $i <= 5; $i++){
 			$tempArr[$i] = [BlockIds::DOUBLE_WOODEN_SLAB, $i];
 		}
 		self::$MAP[BlockIds::DROPPER] = $tempArr;
 
 		$tempArr = [];
-		for ($i = 0; $i <= 13; $i++) {
+		for($i = 0; $i <= 13; $i++){
 			$tempArr[$i] = [BlockIds::WOODEN_SLAB, $i];
 		}
 		self::$MAP[BlockIds::ACTIVATOR_RAIL] = $tempArr;
@@ -110,8 +108,7 @@ final class BlocksMap
 	/**
 	 * @return array
 	 */
-	public static function get(): array
-	{
+	public static function get() : array{
 		return self::$MAP;
 	}
 }

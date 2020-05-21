@@ -25,8 +25,7 @@ use pocketmine\utils\Binary;
 use pocketmine\utils\TextFormat;
 use RegexIterator;
 
-class WorldManager
-{
+class WorldManager{
 	/**@var Loader $loader */
 	private $loader;
 	/**@var Level $world */
@@ -34,19 +33,16 @@ class WorldManager
 	/**@var bool $isConverting */
 	private $isConverting = false;
 
-	public function __construct(Loader $loader, Level $world)
-	{
+	public function __construct(Loader $loader, Level $world){
 		$this->loader = $loader;
 		$this->world = $world;
 	}
 
-	public function getWorld(): Level
-	{
+	public function getWorld() : Level{
 		return $this->world;
 	}
 
-	public function backup(): void
-	{
+	public function backup() : void{
 		$this->loader->getLogger()->debug("Creating a backup of {$this->world->getName()}");
 		$srcPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->world->getFolderName()}";
 		$destPath = "{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}";
@@ -54,11 +50,10 @@ class WorldManager
 		$this->loader->getLogger()->debug("Backup successfully created");
 	}
 
-	public function restore(): void
-	{
+	public function restore() : void{
 		$this->loader->getLogger()->debug("Restoring a backup of {$this->world->getName()}");
 		$srcPath = "{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}";
-		if (!$this->hasBackup()) {
+		if(!$this->hasBackup()){
 			throw new InvalidStateException("This world never gets a backup.");
 		}
 
@@ -68,39 +63,35 @@ class WorldManager
 		$this->loader->getLogger()->debug("Successfully restored");
 	}
 
-	public function hasBackup(): bool
-	{
+	public function hasBackup() : bool{
 		return file_exists("{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}");
 	}
 
-	public function unloadLevel(): bool
-	{
+	public function unloadLevel() : bool{
 		return $this->loader->getServer()->unloadLevel($this->world);
 	}
 
-	public function isConverting(): bool
-	{
+	public function isConverting() : bool{
 		return $this->isConverting;
 	}
 
-	public function startConversion(): void
-	{
+	public function startConversion() : void{
 		//Conversion report variables
 		$status = true;
 		$chunksAnalyzed = $subChunksAnalyzed = $convertedBlocks = $convertedSigns = 0;
 
-		if (!$this->hasBackup()) {
+		if(!$this->hasBackup()){
 			$this->loader->getLogger()->warning("The world \"{$this->world->getName()}\" will be converted without a backup.");
 		}
 
-		foreach ($this->loader->getServer()->getOnlinePlayers() as $player) {
+		foreach($this->loader->getServer()->getOnlinePlayers() as $player){
 			$player->kick("The server is running a world conversion, try to join later.", false);
 		}
 
 		$this->loader->getLogger()->debug("Starting world \"{$this->world->getName()}\" conversion...");
 		$conversionStart = microtime(true);
 		$this->isConverting = true;
-		try {
+		try{
 			$this->loader->getLogger()->debug("Loading chunks...");
 			$totalChunks = $this->countChunks();
 			$chunks = $this->loadAllChunks(true);
@@ -111,51 +102,51 @@ class WorldManager
 			$cx = $cz = PHP_INT_MAX;
 
 			/**@var Chunk $chunk */
-			foreach ($chunks as $chunk) {
+			foreach($chunks as $chunk){
 				$hasChanged = false;
-				for ($y = 0; $y < $chunk->getMaxY(); $y++) {
+				for($y = 0; $y < $chunk->getMaxY(); $y++){
 					$subChunk = $chunk->getSubChunk($y >> 4);
-					if ($subChunk instanceof EmptySubChunk) {
+					if($subChunk instanceof EmptySubChunk){
 						continue;
 					}
-					for ($x = 0; $x < 16; $x++) {
-						for ($z = 0; $z < 16; $z++) {
+					for($x = 0; $x < 16; $x++){
+						for($z = 0; $z < 16; $z++){
 							$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
-							if ($blockId === BlockIds::AIR) {
+							if($blockId === BlockIds::AIR){
 								continue;
 							}
 
-							if (($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && ($cx !== $chunk->getX() && $cz !== $chunk->getZ())) {
+							if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && ($cx !== $chunk->getX() && $cz !== $chunk->getZ())){
 								$cx = $chunk->getX();
 								$cz = $chunk->getZ();
 								$this->loader->getLogger()->debug("Found a chunk({$cx};{$cz}) containing signs...");
-								foreach ($this->world->getChunkTiles($cx, $cz) as $tile) {
-									if ($tile instanceof Sign) {
+								foreach($this->world->getChunkTiles($cx, $cz) as $tile){
+									if($tile instanceof Sign){
 										$convertedSigns++;
 										$colors = Utils::getTextFormatColors();
-										for ($i = 0; $i < 4; $i++) {
+										for($i = 0; $i < 4; $i++){
 											$line = "";
 											$data = json_decode($tile->getLine($i), true);
-											if (is_array($data)) {
-												if (isset($data["extra"])) {
-													foreach ($data["extra"] as $extraData) {
+											if(is_array($data)){
+												if(isset($data["extra"])){
+													foreach($data["extra"] as $extraData){
 														$line .= $colors[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
 													}
 												}
 												$line .= $data["text"] ?? "";
-											} else {
-												$line = (string)$data;
+											}else{
+												$line = (string) $data;
 											}
 											$tile->setLine($i, $line);
 										}
 										$hasChanged = true;
 									}
 								}
-							} else {
+							}else{
 								$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
-								foreach ($blocksMap as $oldId => $subMap) {
-									foreach ($subMap as $oldMeta => $newBlockData) {
-										if ($blockId === $oldId && $blockMeta === $oldMeta) {
+								foreach($blocksMap as $oldId => $subMap){
+									foreach($subMap as $oldMeta => $newBlockData){
+										if($blockId === $oldId && $blockMeta === $oldMeta){
 											$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$newBlockData[0]}:{$newBlockData[1]}\"");
 											$subChunk->setBlock($x, $y & 0x0f, $z, $newBlockData[0], $newBlockData[1]);
 											$hasChanged = true;
@@ -169,20 +160,20 @@ class WorldManager
 					$subChunksAnalyzed++;
 				}
 
-				if ($hasChanged) {
+				if($hasChanged){
 					$this->world->setChunk($chunk->getX(), $chunk->getZ(), $chunk, false);
 					$this->world->unloadChunk($chunk->getX(), $chunk->getZ());
 				}
 
 				$chunksAnalyzed++;
-				if ($chunksAnalyzed % 200 === 0 || $chunksAnalyzed === $totalChunks) {
+				if($chunksAnalyzed % 200 === 0 || $chunksAnalyzed === $totalChunks){
 					$diff = number_format((microtime(true) - $chunkTime), 1);
 					$this->loader->getLogger()->info("Current analyzed chunks: {$chunksAnalyzed}/{$totalChunks} (200 chunks/{$diff}s)");
 					$chunkTime = microtime(true);
 				}
 			}
 			$this->world->save(true);
-		} catch (Exception $e) {
+		}catch(Exception $e){
 			$this->loader->getLogger()->critical($e);
 			$status = false;
 		}
@@ -204,69 +195,24 @@ class WorldManager
 		$this->loader->getLogger()->info($report);
 	}
 
-	private function loadAllChunks(bool $skipCorrupted = false): Generator
-	{
-		$provider = $this->world->getProvider();
-
-		if ($provider instanceof LevelDB) {
-			foreach ($provider->getDatabase()->getIterator() as $key => $_) {
-				if (strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION) {
-					$chunkX = Binary::readLInt(substr($key, 0, 4));
-					$chunkZ = Binary::readLInt(substr($key, 4, 4));
-					try {
-						if (($chunk = $provider->loadChunk($chunkX, $chunkZ)) !== null) {
-							yield $chunk;
-						}
-					} catch (CorruptedChunkException $e) {
-						if (!$skipCorrupted) {
-							throw $e;
-						}
-					}
-				}
-			}
-		} else {
-			foreach ($this->createRegionIterator() as $region) {
-				$regionX = ((int)$region[1]);
-				$regionZ = ((int)$region[2]);
-				$rX = $regionX << 5;
-				$rZ = $regionZ << 5;
-				for ($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX) {
-					for ($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ) {
-						try {
-							$chunk = $provider->loadChunk($chunkX, $chunkZ);
-							if ($chunk !== null) {
-								yield $chunk;
-							}
-						} catch (CorruptedChunkException $e) {
-							if (!$skipCorrupted) {
-								throw $e;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private function countChunks(): int
-	{
+	private function countChunks() : int{
 		$provider = $this->world->getProvider();
 		$count = 0;
-		if ($provider instanceof LevelDB) {
-			foreach ($provider->getDatabase()->getIterator() as $key => $_) {
-				if (strlen($key) === 9 && substr($key, -1) === LevelDB::TAG_VERSION) {
+		if($provider instanceof LevelDB){
+			foreach($provider->getDatabase()->getIterator() as $key => $_){
+				if(strlen($key) === 9 && substr($key, -1) === LevelDB::TAG_VERSION){
 					$count++;
 				}
 			}
-		} else {
-			foreach ($this->createRegionIterator() as $region) {
-				$regionX = ((int)$region[1]);
-				$regionZ = ((int)$region[2]);
+		}else{
+			foreach($this->createRegionIterator() as $region){
+				$regionX = ((int) $region[1]);
+				$regionZ = ((int) $region[2]);
 				$rX = $regionX << 5;
 				$rZ = $regionZ << 5;
-				for ($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX) {
-					for ($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ) {
-						if ($this->world->isChunkGenerated($chunkX, $chunkZ)) {
+				for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
+					for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
+						if($this->world->isChunkGenerated($chunkX, $chunkZ)){
 							$this->world->unloadChunk($chunkX, $chunkZ, false, false);
 							$count++;
 						}
@@ -274,11 +220,11 @@ class WorldManager
 				}
 			}
 		}
+
 		return $count;
 	}
 
-	private function createRegionIterator(): RegexIterator
-	{
+	private function createRegionIterator() : RegexIterator{
 		return new RegexIterator(
 			new FilesystemIterator(
 				$this->world->getProvider()->getPath() . 'region/',
@@ -289,17 +235,59 @@ class WorldManager
 		);
 	}
 
-	private function getWorldExtension(): ?string
-	{
+	private function getWorldExtension() : ?string{
 		$providerName = $this->world->getProvider()->getProviderName();
-		if ($providerName === Anvil::getProviderName()) {
+		if($providerName === Anvil::getProviderName()){
 			return Anvil::REGION_FILE_EXTENSION;
-		} else if ($providerName === McRegion::getProviderName()) {
+		}else if($providerName === McRegion::getProviderName()){
 			return McRegion::REGION_FILE_EXTENSION;
-		} else if ($providerName === PMAnvil::getProviderName()) {
+		}else if($providerName === PMAnvil::getProviderName()){
 			return PMAnvil::REGION_FILE_EXTENSION;
 		}
 
 		return null;
+	}
+
+	private function loadAllChunks(bool $skipCorrupted = false) : Generator{
+		$provider = $this->world->getProvider();
+
+		if($provider instanceof LevelDB){
+			foreach($provider->getDatabase()->getIterator() as $key => $_){
+				if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
+					$chunkX = Binary::readLInt(substr($key, 0, 4));
+					$chunkZ = Binary::readLInt(substr($key, 4, 4));
+					try{
+						if(($chunk = $provider->loadChunk($chunkX, $chunkZ)) !== null){
+							yield $chunk;
+						}
+					}catch(CorruptedChunkException $e){
+						if(!$skipCorrupted){
+							throw $e;
+						}
+					}
+				}
+			}
+		}else{
+			foreach($this->createRegionIterator() as $region){
+				$regionX = ((int) $region[1]);
+				$regionZ = ((int) $region[2]);
+				$rX = $regionX << 5;
+				$rZ = $regionZ << 5;
+				for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
+					for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
+						try{
+							$chunk = $provider->loadChunk($chunkX, $chunkZ);
+							if($chunk !== null){
+								yield $chunk;
+							}
+						}catch(CorruptedChunkException $e){
+							if(!$skipCorrupted){
+								throw $e;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
