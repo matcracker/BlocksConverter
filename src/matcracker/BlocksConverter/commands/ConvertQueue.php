@@ -9,11 +9,12 @@ use matcracker\BlocksConverter\world\WorldManager;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\level\Level;
+use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
-final class ConvertQueue extends Command
-{
+final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 	private $loader;
 
 	public function __construct(Loader $loader)
@@ -91,5 +92,12 @@ final class ConvertQueue extends Command
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @return Loader
+	 */
+	public function getPlugin() : Plugin{
+		return $this->loader;
 	}
 }

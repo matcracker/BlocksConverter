@@ -4,23 +4,28 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\commands;
 
+use matcracker\BlocksConverter\Loader;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\Player;
+use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
 final class ToolBlock extends Command
 {
 	/**@var Player[] $players */
 	private static $players = [];
+	/** @var Loader */
+	private $loader;
 
-	public function __construct()
-	{
+	public function __construct(Loader $loader){
 		parent::__construct(
 			'toolblock',
 			'Allows to get information about the block you are looking at.',
 			'/toolblock'
 		);
+		$this->loader = $loader;
 	}
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
@@ -61,5 +66,12 @@ final class ToolBlock extends Command
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @return Loader
+	 */
+	public function getPlugin() : Plugin{
+		return $this->loader;
 	}
 }

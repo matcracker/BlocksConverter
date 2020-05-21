@@ -26,7 +26,7 @@ final class Loader extends PluginBase implements Listener
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		$this->getServer()->getCommandMap()->register('blocksconverter', new Convert($this));
 		$this->getServer()->getCommandMap()->register('blocksconverter', new ConvertQueue($this));
-		$this->getServer()->getCommandMap()->register('blocksconverter', new ToolBlock());
+		$this->getServer()->getCommandMap()->register('blocksconverter', new ToolBlock($this));
 
 		$this->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
 	}

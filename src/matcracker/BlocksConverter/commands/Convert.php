@@ -9,10 +9,11 @@ use matcracker\BlocksConverter\world\WorldManager;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\PluginIdentifiableCommand;
+use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
-final class Convert extends Command
-{
+final class Convert extends Command implements PluginIdentifiableCommand{
 	private $loader;
 
 	public function __construct(Loader $loader)
@@ -79,5 +80,12 @@ final class Convert extends Command
 			$sender->sendMessage(TextFormat::RED . "World {$worldOption} isn't loaded or does not exist.");
 		}
 		return true;
+	}
+
+	/**
+	 * @return Loader
+	 */
+	public function getPlugin() : Plugin{
+		return $this->loader;
 	}
 }
