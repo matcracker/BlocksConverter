@@ -67,7 +67,55 @@ final class BlocksMap{
 		],
 		BlockIds::END_ROD => [
 			[BlockIds::GRASS_PATH, 0]
-		]
+		],
+		BlockIds::BLACK_GLAZED_TERRACOTTA => [
+			[BlockIds::WHITE_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::CONCRETE => [
+			[BlockIds::ORANGE_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::CONCRETE_POWDER => [
+			[BlockIds::MAGENTA_GLAZED_TERRACOTTA, 0]
+		],
+		238 => [
+			[BlockIds::LIGHT_BLUE_GLAZED_TERRACOTTA, 0]
+		],
+		239 => [
+			[BlockIds::YELLOW_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::CHORUS_PLANT => [
+			[BlockIds::LIME_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::STAINED_GLASS => [
+			[BlockIds::PINK_GLAZED_TERRACOTTA, 0]
+		],
+		242 => [
+			[BlockIds::GRAY_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::PODZOL => [ //Should be Light Gray Glazed Terracotta but does not exist.
+			[0, 0]
+		],
+		BlockIds::BEETROOT_BLOCK => [
+			[BlockIds::CYAN_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::STONECUTTER => [
+			[BlockIds::PURPLE_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::GLOWING_OBSIDIAN => [
+			[BlockIds::BLUE_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::NETHER_REACTOR => [
+			[BlockIds::BROWN_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::INFO_UPDATE => [
+			[BlockIds::GREEN_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::INFO_UPDATE2 => [
+			[BlockIds::RED_GLAZED_TERRACOTTA, 0]
+		],
+		BlockIds::MOVING_BLOCK => [
+			[BlockIds::BLACK_GLAZED_TERRACOTTA, 0]
+		],
 		/*166 => [
 			[416, 0] //MC-PE Barrier
 		]*/
@@ -103,6 +151,18 @@ final class BlocksMap{
 			$tempArr[$i] = [BlockIds::WOODEN_SLAB, $i];
 		}
 		self::$MAP[BlockIds::ACTIVATOR_RAIL] = $tempArr;
+
+		$tempArr = [];
+		for($i = 0; $i <= 15; $i++){
+			$tempArr[$i] = [BlockIds::CONCRETE, $i];
+		}
+		self::$MAP[BlockIds::OBSERVER] = $tempArr;
+
+		$tempArr = [];
+		for($i = 0; $i <= 15; $i++){
+			$tempArr[$i] = [BlockIds::END_ROD, $i];
+		}
+		self::$MAP[BlockIds::GRASS_PATH] = $tempArr;
 	}
 
 	/**
