@@ -6,7 +6,6 @@ namespace matcracker\BlocksConverter\world;
 
 use Exception;
 use FilesystemIterator;
-use Generator;
 use InvalidStateException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
@@ -24,18 +23,31 @@ use pocketmine\tile\Sign;
 use pocketmine\utils\Binary;
 use pocketmine\utils\TextFormat;
 use RegexIterator;
+use function is_array;
+use function json_decode;
+use function microtime;
+use function number_format;
+use function strlen;
+use function substr;
+use const PHP_EOL;
 
 class WorldManager{
-	/**@var Loader $loader */
+	/**@var Loader */
 	private $loader;
-	/**@var Level $world */
+	/**@var Level */
 	private $world;
-	/**@var bool $isConverting */
+	/**@var bool */
 	private $isConverting = false;
+	/** @var string */
+	private $worldName;
+
+	private $convertedBlocks = 0;
+	private $convertedSigns = 0;
 
 	public function __construct(Loader $loader, Level $world){
 		$this->loader = $loader;
 		$this->world = $world;
+		$this->worldName = $world->getFolderName();
 	}
 
 	public function getWorld() : Level{
@@ -43,28 +55,28 @@ class WorldManager{
 	}
 
 	public function backup() : void{
-		$this->loader->getLogger()->debug("Creating a backup of {$this->world->getName()}");
-		$srcPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->world->getFolderName()}";
-		$destPath = "{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}";
+		$this->loader->getLogger()->debug("Creating a backup of {$this->worldName}");
+		$srcPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->worldName}";
+		$destPath = "{$this->loader->getDataFolder()}/backups/{$this->worldName}";
 		Utils::recursiveCopyDirectory($srcPath, $destPath);
 		$this->loader->getLogger()->debug("Backup successfully created");
 	}
 
 	public function restore() : void{
-		$this->loader->getLogger()->debug("Restoring a backup of {$this->world->getName()}");
-		$srcPath = "{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}";
+		$this->loader->getLogger()->debug("Restoring a backup of {$this->worldName}");
+		$srcPath = "{$this->loader->getDataFolder()}/backups/{$this->worldName}";
 		if(!$this->hasBackup()){
 			throw new InvalidStateException("This world never gets a backup.");
 		}
 
-		$destPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->world->getFolderName()}";
+		$destPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->worldName}";
 
 		Utils::recursiveCopyDirectory($srcPath, $destPath);
 		$this->loader->getLogger()->debug("Successfully restored");
 	}
 
 	public function hasBackup() : bool{
-		return file_exists("{$this->loader->getDataFolder()}/backups/{$this->world->getFolderName()}");
+		return file_exists("{$this->loader->getDataFolder()}/backups/{$this->worldName}");
 	}
 
 	public function unloadLevel() : bool{
@@ -78,121 +90,194 @@ class WorldManager{
 	public function startConversion() : void{
 		//Conversion report variables
 		$status = true;
-		$chunksAnalyzed = $subChunksAnalyzed = $convertedBlocks = $convertedSigns = 0;
+		$totalChunks = $convertedChunks = $unloadedChunks = $corruptedChunks = 0;
+		$this->convertedBlocks = $this->convertedSigns = 0;
 
 		if(!$this->hasBackup()){
-			$this->loader->getLogger()->warning("The world \"{$this->world->getName()}\" will be converted without a backup.");
+			$this->loader->getLogger()->warning("The world \"{$this->worldName}\" will be converted without a backup.");
 		}
 
 		foreach($this->loader->getServer()->getOnlinePlayers() as $player){
 			$player->kick("The server is running a world conversion, try to join later.", false);
 		}
 
-		$this->loader->getLogger()->debug("Starting world \"{$this->world->getName()}\" conversion...");
-		$conversionStart = microtime(true);
+		$this->loader->getLogger()->debug("Starting world \"{$this->worldName}\" conversion...");
 		$this->isConverting = true;
+		$provider = $this->world->getProvider();
+
+		$conversionStart = microtime(true);
 		try{
-			$this->loader->getLogger()->debug("Loading chunks...");
-			$totalChunks = $this->countChunks();
-			$chunks = $this->loadAllChunks(true);
-			$this->loader->getLogger()->debug("Loaded {$totalChunks} chunks.");
-			$blocksMap = BlocksMap::get();
-
-			$chunkTime = microtime(true);
-			$cx = $cz = PHP_INT_MAX;
-
-			/**@var Chunk $chunk */
-			foreach($chunks as $chunk){
-				$hasChanged = false;
-				for($y = 0; $y < $chunk->getMaxY(); $y++){
-					$subChunk = $chunk->getSubChunk($y >> 4);
-					if($subChunk instanceof EmptySubChunk){
-						continue;
-					}
-					for($x = 0; $x < 16; $x++){
-						for($z = 0; $z < 16; $z++){
-							$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
-							if($blockId === BlockIds::AIR){
-								continue;
-							}
-
-							if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && ($cx !== $chunk->getX() && $cz !== $chunk->getZ())){
-								$cx = $chunk->getX();
-								$cz = $chunk->getZ();
-								$this->loader->getLogger()->debug("Found a chunk({$cx};{$cz}) containing signs...");
-								foreach($this->world->getChunkTiles($cx, $cz) as $tile){
-									if($tile instanceof Sign){
-										$convertedSigns++;
-										$colors = Utils::getTextFormatColors();
-										for($i = 0; $i < 4; $i++){
-											$line = "";
-											$data = json_decode($tile->getLine($i), true);
-											if(is_array($data)){
-												if(isset($data["extra"])){
-													foreach($data["extra"] as $extraData){
-														$line .= $colors[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
-													}
-												}
-												$line .= $data["text"] ?? "";
-											}else{
-												$line = (string) $data;
-											}
-											$tile->setLine($i, $line);
-										}
-										$hasChanged = true;
-									}
+			if($provider instanceof LevelDB){
+				foreach($provider->getDatabase()->getIterator() as $key => $_){
+					if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
+						$chunkX = Binary::readLInt(substr($key, 0, 4));
+						$chunkZ = Binary::readLInt(substr($key, 4, 4));
+						try{
+							if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
+								if($this->convertChunk($chunk)){
+									$convertedChunks++;
 								}
 							}else{
-								$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
-								foreach($blocksMap as $oldId => $subMap){
-									foreach($subMap as $oldMeta => $newBlockData){
-										if($blockId === $oldId && $blockMeta === $oldMeta){
-											$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$newBlockData[0]}:{$newBlockData[1]}\"");
-											$subChunk->setBlock($x, $y & 0x0f, $z, $newBlockData[0], $newBlockData[1]);
-											$hasChanged = true;
-											$convertedBlocks++;
-										}
-									}
-								}
+								$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
 							}
+							$totalChunks++;
+						}catch(CorruptedChunkException $e){
+							$corruptedChunks++;
 						}
 					}
-					$subChunksAnalyzed++;
 				}
-
-				if($hasChanged){
-					$this->world->setChunk($chunk->getX(), $chunk->getZ(), $chunk, false);
-					$this->world->unloadChunk($chunk->getX(), $chunk->getZ());
-				}
-
-				$chunksAnalyzed++;
-				if($chunksAnalyzed % 200 === 0 || $chunksAnalyzed === $totalChunks){
-					$diff = number_format((microtime(true) - $chunkTime), 1);
-					$this->loader->getLogger()->info("Current analyzed chunks: {$chunksAnalyzed}/{$totalChunks} (200 chunks/{$diff}s)");
-					$chunkTime = microtime(true);
+			}else{
+				foreach($this->createRegionIterator() as $region){
+					$regionX = (int) $region[1];
+					$regionZ = (int) $region[2];
+					$rX = $regionX << 5;
+					$rZ = $regionZ << 5;
+					for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
+						for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
+							try{
+								if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
+									if($this->convertChunk($chunk)){
+										$convertedChunks++;
+									}
+								}else{
+									$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
+								}
+							}catch(CorruptedChunkException $e){
+								$corruptedChunks++;
+							}
+							$totalChunks++;
+						}
+					}
 				}
 			}
+
 			$this->world->save(true);
 		}catch(Exception $e){
 			$this->loader->getLogger()->critical($e);
 			$status = false;
 		}
 
-
 		$this->isConverting = false;
 		$this->loader->getLogger()->debug("Conversion finished! Printing full report...");
 
 		$report = PHP_EOL . TextFormat::LIGHT_PURPLE . "--- Conversion Report ---" . PHP_EOL;
 		$report .= TextFormat::AQUA . "Status: " . ($status ? (TextFormat::DARK_GREEN . "Completed") : (TextFormat::RED . "Aborted")) . PHP_EOL;
-		$report .= TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->world->getName() . PHP_EOL;
+		$report .= TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->worldName . PHP_EOL;
 		$report .= TextFormat::AQUA . "Execution time: " . TextFormat::GREEN . number_format((microtime(true) - $conversionStart), 1) . " second(s)" . PHP_EOL;
-		$report .= TextFormat::AQUA . "Analyzed chunks: " . TextFormat::GREEN . $chunksAnalyzed . PHP_EOL;
-		$report .= TextFormat::AQUA . "Analyzed sub-chunks: " . TextFormat::GREEN . $subChunksAnalyzed . PHP_EOL;
-		$report .= TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $convertedBlocks . PHP_EOL;
-		$report .= TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $convertedSigns . PHP_EOL;
+		$report .= TextFormat::AQUA . "Total chunks: " . TextFormat::GREEN . $totalChunks . PHP_EOL;
+		$report .= TextFormat::AQUA . "Corrupted chunks: " . TextFormat::GREEN . $corruptedChunks . PHP_EOL;
+		$report .= TextFormat::AQUA . "Chunks converted: " . TextFormat::GREEN . $convertedChunks . PHP_EOL;
+		$report .= TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $this->convertedBlocks . PHP_EOL;
+		$report .= TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $this->convertedSigns . PHP_EOL;
 		$report .= TextFormat::LIGHT_PURPLE . "----------";
 
 		$this->loader->getLogger()->info($report);
+	}
+
+	/**
+	 * @param Chunk $chunk
+	 *
+	 * @return bool true if the chunk has been converted otherwise false.
+	 */
+	private function convertChunk(Chunk $chunk) : bool{
+		$hasChanged = false;
+		$cx = $chunk->getX();
+		$cz = $chunk->getZ();
+		$signChunkConverted = false;
+
+		for($y = 0; $y < $chunk->getMaxY(); $y++){
+			$subChunk = $chunk->getSubChunk($y >> 4);
+			if($subChunk instanceof EmptySubChunk){
+				continue;
+			}
+
+			for($x = 0; $x < 16; $x++){
+				for($z = 0; $z < 16; $z++){
+					$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
+					if($blockId === BlockIds::AIR){
+						continue;
+					}
+
+					if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN)){
+						if($signChunkConverted){
+							continue;
+						}
+
+						$this->loader->getLogger()->debug("Found a chunk[{$cx};{$cz}] containing signs...");
+						foreach($chunk->getTiles() as $tile){
+							if(!$tile instanceof Sign){
+								continue;
+							}
+
+							for($i = 0; $i < 4; $i++){
+								$line = "";
+								$data = json_decode($tile->getLine($i), true);
+								if(is_array($data)){
+									if(isset($data["extra"])){
+										foreach($data["extra"] as $extraData){
+											$line .= Utils::getTextFormatColors()[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
+										}
+									}
+									$line .= $data["text"] ?? "";
+								}else{
+									$line = (string) $data;
+								}
+								$tile->setLine($i, $line);
+							}
+
+							$hasChanged = true;
+							$this->convertedSigns++;
+						}
+						$signChunkConverted = true;
+
+					}else{
+						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
+						foreach(BlocksMap::get() as $oldId => $subMap){
+							foreach($subMap as $oldMeta => $newBlockData){
+								if($blockId === $oldId && $blockMeta === $oldMeta){
+									$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$newBlockData[0]}:{$newBlockData[1]}\"");
+									$subChunk->setBlock($x, $y & 0x0f, $z, $newBlockData[0], $newBlockData[1]);
+									$hasChanged = true;
+									$this->convertedBlocks++;
+									break 2;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if($hasChanged){
+			$this->world->setChunk($cx, $cz, $chunk, false);
+			$this->world->unloadChunk($cx, $cz);
+		}
+
+		return $hasChanged;
+	}
+
+	private function createRegionIterator() : RegexIterator{
+		return new RegexIterator(
+			new FilesystemIterator(
+				$this->world->getProvider()->getPath() . 'region/',
+				FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS | FilesystemIterator::UNIX_PATHS
+			),
+			'/\/r\.(-?\d+)\.(-?\d+)\.' . $this->getWorldExtension() . '$/',
+			RegexIterator::GET_MATCH
+		);
+	}
+
+	private function getWorldExtension() : ?string{
+		$providerName = $this->world->getProvider()->getProviderName();
+		if($providerName === Anvil::getProviderName()){
+			return Anvil::REGION_FILE_EXTENSION;
+		}else if($providerName === McRegion::getProviderName()){
+			return McRegion::REGION_FILE_EXTENSION;
+		}else if($providerName === PMAnvil::getProviderName()){
+			return PMAnvil::REGION_FILE_EXTENSION;
+		}
+
+		return null;
 	}
 
 	private function countChunks() : int{
@@ -222,72 +307,5 @@ class WorldManager{
 		}
 
 		return $count;
-	}
-
-	private function createRegionIterator() : RegexIterator{
-		return new RegexIterator(
-			new FilesystemIterator(
-				$this->world->getProvider()->getPath() . 'region/',
-				FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS | FilesystemIterator::UNIX_PATHS
-			),
-			'/\/r\.(-?\d+)\.(-?\d+)\.' . $this->getWorldExtension() . '$/',
-			RegexIterator::GET_MATCH
-		);
-	}
-
-	private function getWorldExtension() : ?string{
-		$providerName = $this->world->getProvider()->getProviderName();
-		if($providerName === Anvil::getProviderName()){
-			return Anvil::REGION_FILE_EXTENSION;
-		}else if($providerName === McRegion::getProviderName()){
-			return McRegion::REGION_FILE_EXTENSION;
-		}else if($providerName === PMAnvil::getProviderName()){
-			return PMAnvil::REGION_FILE_EXTENSION;
-		}
-
-		return null;
-	}
-
-	private function loadAllChunks(bool $skipCorrupted = false) : Generator{
-		$provider = $this->world->getProvider();
-
-		if($provider instanceof LevelDB){
-			foreach($provider->getDatabase()->getIterator() as $key => $_){
-				if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
-					$chunkX = Binary::readLInt(substr($key, 0, 4));
-					$chunkZ = Binary::readLInt(substr($key, 4, 4));
-					try{
-						if(($chunk = $provider->loadChunk($chunkX, $chunkZ)) !== null){
-							yield $chunk;
-						}
-					}catch(CorruptedChunkException $e){
-						if(!$skipCorrupted){
-							throw $e;
-						}
-					}
-				}
-			}
-		}else{
-			foreach($this->createRegionIterator() as $region){
-				$regionX = ((int) $region[1]);
-				$regionZ = ((int) $region[2]);
-				$rX = $regionX << 5;
-				$rZ = $regionZ << 5;
-				for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
-					for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
-						try{
-							$chunk = $provider->loadChunk($chunkX, $chunkZ);
-							if($chunk !== null){
-								yield $chunk;
-							}
-						}catch(CorruptedChunkException $e){
-							if(!$skipCorrupted){
-								throw $e;
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 }
