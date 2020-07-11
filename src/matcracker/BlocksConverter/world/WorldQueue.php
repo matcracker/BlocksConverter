@@ -12,7 +12,7 @@ final class WorldQueue{
 	}
 
 	public static function addInQueue(WorldManager $worldManager) : void{
-		self::$queue[$worldManager->getWorld()->getName()] = $worldManager;
+		self::$queue[$worldManager->getWorld()->getFolderName()] = $worldManager;
 	}
 
 	public static function isEmpty() : bool{

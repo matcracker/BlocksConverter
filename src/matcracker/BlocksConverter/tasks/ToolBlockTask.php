@@ -9,7 +9,8 @@ use pocketmine\block\BlockIds;
 use pocketmine\scheduler\Task;
 
 final class ToolBlockTask extends Task{
-	public function onRun(int $currentTick){
+
+	public function onRun(int $currentTick) : void{
 		$players = ToolBlock::getPlayers();
 		foreach($players as $player){
 			$block = $player->getTargetBlock(5);

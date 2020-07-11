@@ -10,7 +10,6 @@ use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\level\Level;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
@@ -34,7 +33,7 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 			return false;
 		}
 
-		if(count($args) < 1 || count($args) > 2){
+		if(count($args) < 1 || count($args) > 2 || !isset($args[0])){
 			$sender->sendMessage($this->getUsage());
 
 			return false;
@@ -47,7 +46,7 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 				$sender->sendMessage(TextFormat::GOLD . "Worlds in queue:");
 				$queued = WorldQueue::getQueue();
 				foreach($queued as $queue){
-					$sender->sendMessage(TextFormat::AQUA . "- " . $queue->getWorld()->getName());
+					$sender->sendMessage(TextFormat::AQUA . "- " . $queue->getWorld()->getFolderName());
 				}
 			}else{
 				$sender->sendMessage(TextFormat::RED . "The queue is empty!");
@@ -56,16 +55,21 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 			return true;
 		}
 
-		$worldName = $args[1] ?? null;
+		if(!isset($args[1])){
+			$sender->sendMessage($this->getUsage());
+
+			return false;
+		}
+
 		/**@var string[] $worldNames */
 		$worldNames = [];
 
-		if(strtolower($worldName) === "all"){
-			$worldNames = array_map(static function(Level $world) : string{
-				return $world->getName();
-			}, $this->loader->getServer()->getLevels());
+		if(strtolower($args[1]) === "all"){
+			foreach($this->loader->getServer()->getLevels() as $world){
+				$worldNames[] = $world->getFolderName();
+			}
 		}else{
-			$worldNames[] = $worldName;
+			$worldNames[] = $args[1];
 		}
 
 		foreach($worldNames as $worldName){

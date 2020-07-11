@@ -45,7 +45,7 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 				$sender->sendMessage(TextFormat::DARK_AQUA . "This process could takes a lot of time, so don't join or quit the game and wait patently the finish!");
 				$queued = WorldQueue::getQueue();
 				foreach($queued as $queue){
-					$worldName = $queue->getWorld()->getName();
+					$worldName = $queue->getWorld()->getFolderName();
 					if($backup){
 						$sender->sendMessage(TextFormat::GOLD . "Creating a backup of {$worldName}");
 						$queue->backup();
