@@ -232,17 +232,15 @@ class WorldManager{
 
 					}else{
 						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
-						foreach(BlocksMap::get() as $oldId => $subMap){
-							foreach($subMap as $oldMeta => $newBlockData){
-								if($blockId === $oldId && $blockMeta === $oldMeta){
-									$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$newBlockData[0]}:{$newBlockData[1]}\"");
-									$subChunk->setBlock($x, $y & 0x0f, $z, $newBlockData[0], $newBlockData[1]);
-									$hasChanged = true;
-									$this->convertedBlocks++;
-									break 2;
-								}
-							}
+						if(!isset(BlocksMap::get()[$blockId][$blockMeta])){
+							continue;
 						}
+
+						$subMap = BlocksMap::get()[$blockId][$blockMeta];
+						$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$subMap[0]}:{$subMap[1]}\"");
+						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
+						$hasChanged = true;
+						$this->convertedBlocks++;
 					}
 				}
 			}
