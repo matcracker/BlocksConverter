@@ -65,6 +65,15 @@ final class BlocksMap{
 		BlockIds::CHAIN_COMMAND_BLOCK => [
 			[BlockIds::FENCE, 2]
 		],
+		190 => [
+			[BlockIds::FENCE, 3]
+		],
+		191 => [
+			[BlockIds::FENCE, 5]
+		],
+		192 => [
+			[BlockIds::FENCE, 4]
+		],
 		BlockIds::END_ROD => [
 			[BlockIds::GRASS_PATH, 0]
 		],
@@ -115,7 +124,7 @@ final class BlocksMap{
 		],
 		BlockIds::MOVING_BLOCK => [
 			[BlockIds::BLACK_GLAZED_TERRACOTTA, 0]
-		],
+		]
 		/*166 => [
 			[416, 0] //MC-PE Barrier
 		]*/
@@ -157,6 +166,12 @@ final class BlocksMap{
 			$tempArr[$i] = [BlockIds::CONCRETE, $i];
 		}
 		self::$MAP[BlockIds::OBSERVER] = $tempArr;
+
+		$tempArr = [];
+		for($i = 0; $i <= 15; $i++){
+			$tempArr[$i] = [BlockIds::CONCRETE_POWDER, $i];
+		}
+		self::$MAP[BlockIds::STRUCTURE_BLOCK] = $tempArr;
 
 		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
