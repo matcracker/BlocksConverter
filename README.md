@@ -4,18 +4,44 @@
 [![Discord](https://img.shields.io/discord/620519017148579841.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Uf6U78g)
 
 # BlocksConverter
-BlocksConverter is a **PocketMine-MP plugin** that allows you to translate blocks from MC: Java Edition to MCPE.
+BlocksConverter is a **PocketMine-MP plugin** that allows you to translate blocks from MC: Java Edition to Bedrock or vice-versa.
+
+## Important
+This plugin could take some time when converting worlds. While the conversion, **don't** try to stop or turn off the server until it's finished.
 
 ## Commands
-- **/convertqueue <add|remove|status> [world_name|all] (Permission: blocksconverter.command.convertqueue)**
-  - **/cq add <world_name|all>**: It adds one or all worlds in queue before the conversion.
-  - **/cq remove <world_name|all>**: It removes one or all worlds from the queue.
-  - **/cq status**: It shows the status of current queue.
-- **/convert <world_name|queue> [backup=true|false] (Permission: blocksconverter.command.convert)**
-  - **/convert [world_name] [backup=true|false]**: It directly convert a world (without quotes!) and it optionally runs a backup (by default is true)
-  - **/convert queue [backup=true|false]**: It starts to convert all the worlds in queue.
-- **/toolblock (Permission: blocksconverter.command.toolblock)**
-  - Allows to show information about the block you are targetting. (Useful to detect the block ID to replace with).
-  
-## Important
-This plugin could take some time before the conversion isn't finished. While the conversion, **don't** try to stop or turn off the server until it's finished.
+
+### /convert
+
+Allows to convert a single world or a queue of world to the platform destination (bedrock or java).
+
+**Syntax**: /convert <world_name|queue> [backup=true|false] [platform=bedrock|java] [force=true|false]
+
+**Permission**: blocksconverter.command.convert
+
+**Command parameters**:
+- **<world_name|queue>**: it's a mandatory parameter, it requires the name of world to be converted or "queue" to convert a list of worlds. (See **/convertqueue** for more information)
+- **[backup=true|false]**: it's an optional parameter, when the value is "true" it creates a backup of your world before the conversion otherwise not. _(Default "true")_
+- **[platform=bedrock|java]**: it's an optional parameter, when the value is "bedrock" it converts the world from java to bedrock, when "java" it converts from bedrock to java. _(Default "bedrock")_
+- **[force=true|false]**: it's an optional parameter, when the value is "true" you will force the conversion to run **(at your own risk!)** otherwise not. _(Default "false")_
+
+### /convertqueue
+
+Allows to manage worlds to be converted. It's useful when you need to convert more than one world.
+
+**Syntax**: /convertqueue <add|remove|status> [world_name|all]
+
+**Permission**: blocksconverter.command.convertqueue
+
+**Command alias**: /cq
+
+**Command parameters**:
+- **add**: It adds one or all worlds in queue before the conversion. 
+- **remove**: It removes one or all worlds from the queue.
+- **status**: It shows the status of current queue.
+
+### /toolblock
+
+Allows showing information about the block you are targeting. (Useful to detect the block ID to replace with).
+
+**Permission**: blocksconverter.command.toolblock
