@@ -10,7 +10,6 @@ use InvalidStateException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\utils\Utils;
-use pocketmine\block\Block;
 use pocketmine\block\BlockIds;
 use pocketmine\level\format\Chunk;
 use pocketmine\level\format\EmptySubChunk;
