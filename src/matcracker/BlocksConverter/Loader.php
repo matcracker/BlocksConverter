@@ -7,7 +7,6 @@ namespace matcracker\BlocksConverter;
 use matcracker\BlocksConverter\commands\Convert;
 use matcracker\BlocksConverter\commands\ConvertQueue;
 use matcracker\BlocksConverter\commands\ToolBlock;
-use matcracker\BlocksConverter\tasks\ToolBlockTask;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\PluginBase;

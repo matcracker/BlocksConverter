@@ -16,6 +16,7 @@ final class ToolBlockTask extends Task{
 
 		if(count($players) === 0){
 			$this->getHandler()->cancel();
+
 			return;
 		}
 
