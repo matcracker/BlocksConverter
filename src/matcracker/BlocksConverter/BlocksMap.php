@@ -7,6 +7,8 @@ namespace matcracker\BlocksConverter;
 use pocketmine\block\BlockIds;
 
 final class BlocksMap{
+
+	/** @var int[][][] */
 	private static $MAP = [
 		BlockIds::DIRT => [
 			2 => [BlockIds::PODZOL, 0]
@@ -21,7 +23,6 @@ final class BlocksMap{
 			0 => [BlockIds::DEAD_BUSH, 0]
 		],
 		BlockIds::PISTON => [
-
 			3 => [BlockIds::PISTON, 2],
 			4 => [BlockIds::PISTON, 5],
 			5 => [BlockIds::PISTON, 4]
@@ -70,9 +71,6 @@ final class BlocksMap{
 			3 => [BlockIds::QUARTZ_BLOCK, 6],
 			4 => [BlockIds::QUARTZ_BLOCK, 10]
 		],
-		BlockIds::DOUBLE_WOODEN_SLAB => [
-			0 => [BlockIds::ACTIVATOR_RAIL, 0]
-		],
 		/*166 => [
 			[416, 0] //MC-PE Barrier
 		]*/
@@ -120,9 +118,6 @@ final class BlocksMap{
 		BlockIds::UNDYED_SHULKER_BOX => [
 			0 => [BlockIds::STONE_SLAB2, 1],
 			8 => [BlockIds::STONE_SLAB2, 9]
-		],
-		BlockIds::FROSTED_ICE => [
-			0 => [BlockIds::BEETROOT_BLOCK, 0]
 		],
 		BlockIds::END_ROD => [
 			[BlockIds::GRASS_PATH, 0]
@@ -344,7 +339,7 @@ final class BlocksMap{
 	}
 
 	/**
-	 * @return array
+	 * @return int[][][]
 	 */
 	public static function get() : array{
 		return self::$MAP;
