@@ -341,6 +341,23 @@ final class BlocksMap{
 	/**
 	 * @return int[][][]
 	 */
+	public static function reverse() : array{
+		$newMap = [];
+		foreach(self::$MAP as $javaId => $javaData){
+			foreach($javaData as $javaMeta => $bedrockData){
+				$bedrockId = (int) $bedrockData[0];
+				$bedrockMeta = (int) $bedrockData[1];
+
+				$newMap[$bedrockId][$bedrockMeta] = [$javaId, $javaMeta];
+			}
+		}
+
+		return $newMap;
+	}
+
+	/**
+	 * @return int[][][]
+	 */
 	public static function get() : array{
 		return self::$MAP;
 	}

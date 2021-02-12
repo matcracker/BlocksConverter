@@ -10,6 +10,7 @@ use InvalidStateException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\utils\Utils;
+use pocketmine\block\Block;
 use pocketmine\block\BlockIds;
 use pocketmine\level\format\Chunk;
 use pocketmine\level\format\EmptySubChunk;
@@ -87,7 +88,7 @@ class WorldManager{
 		return $this->isConverting;
 	}
 
-	public function startConversion() : void{
+	public function startConversion(bool $toBedrock = true) : void{
 		//Conversion report variables
 		$status = true;
 		$totalChunks = $convertedChunks = $unloadedChunks = $corruptedChunks = 0;
@@ -114,7 +115,7 @@ class WorldManager{
 						$chunkZ = Binary::readLInt(substr($key, 4, 4));
 						try{
 							if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
-								if($this->convertChunk($chunk)){
+								if($this->convertChunk($chunk, $toBedrock)){
 									$convertedChunks++;
 								}
 							}else{
@@ -136,7 +137,7 @@ class WorldManager{
 						for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
 							try{
 								if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
-									if($this->convertChunk($chunk)){
+									if($this->convertChunk($chunk, $toBedrock)){
 										$convertedChunks++;
 									}
 								}else{
@@ -160,15 +161,15 @@ class WorldManager{
 		$this->isConverting = false;
 		$this->loader->getLogger()->debug("Conversion finished! Printing full report...");
 
-		$report = PHP_EOL . TextFormat::LIGHT_PURPLE . "--- Conversion Report ---" . PHP_EOL;
-		$report .= TextFormat::AQUA . "Status: " . ($status ? (TextFormat::DARK_GREEN . "Completed") : (TextFormat::RED . "Aborted")) . PHP_EOL;
-		$report .= TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->worldName . PHP_EOL;
-		$report .= TextFormat::AQUA . "Execution time: " . TextFormat::GREEN . number_format((microtime(true) - $conversionStart), 1) . " second(s)" . PHP_EOL;
-		$report .= TextFormat::AQUA . "Total chunks: " . TextFormat::GREEN . $totalChunks . PHP_EOL;
-		$report .= TextFormat::AQUA . "Corrupted chunks: " . TextFormat::GREEN . $corruptedChunks . PHP_EOL;
-		$report .= TextFormat::AQUA . "Chunks converted: " . TextFormat::GREEN . $convertedChunks . PHP_EOL;
-		$report .= TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $this->convertedBlocks . PHP_EOL;
-		$report .= TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $this->convertedSigns . PHP_EOL;
+		$report = PHP_EOL . TextFormat::LIGHT_PURPLE . "--- Conversion Report ---" . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Status: " . ($status ? (TextFormat::DARK_GREEN . "Completed") : (TextFormat::RED . "Aborted")) . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->worldName . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Execution time: " . TextFormat::GREEN . number_format((microtime(true) - $conversionStart), 1) . " second(s)" . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Total chunks: " . TextFormat::GREEN . $totalChunks . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Corrupted chunks: " . TextFormat::GREEN . $corruptedChunks . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Chunks converted: " . TextFormat::GREEN . $convertedChunks . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $this->convertedBlocks . TextFormat::EOL;
+		$report .= TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $this->convertedSigns . TextFormat::EOL;
 		$report .= TextFormat::LIGHT_PURPLE . "----------";
 
 		$this->loader->getLogger()->info($report);
@@ -176,14 +177,17 @@ class WorldManager{
 
 	/**
 	 * @param Chunk $chunk
+	 * @param bool  $toBedrock
 	 *
 	 * @return bool true if the chunk has been converted otherwise false.
 	 */
-	private function convertChunk(Chunk $chunk) : bool{
+	private function convertChunk(Chunk $chunk, bool $toBedrock = true) : bool{
 		$hasChanged = false;
 		$cx = $chunk->getX();
 		$cz = $chunk->getZ();
 		$signChunkConverted = false;
+
+		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
 
 		for($y = 0; $y < $chunk->getMaxY(); $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
@@ -204,7 +208,8 @@ class WorldManager{
 						}
 
 						$this->loader->getLogger()->debug("Found a chunk[{$cx};{$cz}] containing signs...");
-						foreach($chunk->getTiles() as $tile){
+						$tiles = $chunk->getTiles();
+						foreach($tiles as $tile){
 							if(!$tile instanceof Sign){
 								continue;
 							}
@@ -232,11 +237,12 @@ class WorldManager{
 
 					}else{
 						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
-						if(!isset(BlocksMap::get()[$blockId][$blockMeta])){
+
+						if(!isset($blockMap[$blockId][$blockMeta])){
 							continue;
 						}
 
-						$subMap = BlocksMap::get()[$blockId][$blockMeta];
+						$subMap = $blockMap[$blockId][$blockMeta];
 						$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$subMap[0]}:{$subMap[1]}\"");
 						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
 						$hasChanged = true;
