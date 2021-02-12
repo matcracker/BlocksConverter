@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace matcracker\BlocksConverter\commands;
 
 use matcracker\BlocksConverter\Loader;
+use matcracker\BlocksConverter\tasks\ToolBlockTask;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
+use function count;
 
 final class ToolBlock extends Command implements PluginIdentifiableCommand{
 	/**@var Player[] */
@@ -53,6 +55,10 @@ final class ToolBlock extends Command implements PluginIdentifiableCommand{
 		}else{
 			self::$players[$senderName] = $sender;
 			$sender->sendMessage(TextFormat::GREEN . "ToolBlock enabled.");
+
+			if(count(self::$players) === 1){
+				$this->loader->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
+			}
 		}
 
 		return true;

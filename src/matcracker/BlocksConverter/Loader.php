@@ -26,8 +26,6 @@ final class Loader extends PluginBase implements Listener{
 			new ConvertQueue($this),
 			new ToolBlock($this)
 		]);
-
-		$this->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
 	}
 
 	public function onPlayerQuit(PlayerQuitEvent $event) : void{
