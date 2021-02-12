@@ -201,7 +201,8 @@ class WorldManager{
 						continue;
 					}
 
-					if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN)){
+					//At the moment support sign conversion only from java to bedrock
+					if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && $toBedrock){
 						if($signChunkConverted){
 							continue;
 						}

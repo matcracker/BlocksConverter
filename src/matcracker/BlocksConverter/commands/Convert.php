@@ -65,6 +65,7 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 
 		}
 
+		//Force to convert to the specific world format.
 		$force = isset($args[3]) ? (bool) filter_var($args[3], FILTER_VALIDATE_BOOLEAN) : false;
 
 		if(strtolower($worldOption) === "queue"){
@@ -103,7 +104,8 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 
 					return;
 				}
-			}elseif(!$toBedrock){
+
+			}elseif(!$toBedrock){ //Without the tag consider the world coming from java
 				$sender->sendMessage(TextFormat::RED . "The world \"{$worldName}\" is already converted.");
 
 				return;
