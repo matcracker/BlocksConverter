@@ -113,12 +113,9 @@ class WorldManager{
 						$chunkX = Binary::readLInt(substr($key, 0, 4));
 						$chunkZ = Binary::readLInt(substr($key, 4, 4));
 						try{
-							if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
-								if($this->convertChunk($chunk, $toBedrock)){
-									$convertedChunks++;
-								}
-							}else{
-								$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
+							if($this->world->getChunk($chunkX, $chunkZ) === null) $this->world->loadChunk($chunkX, $chunkZ);
+							if($this->convertChunk($this->world->getChunk($chunkX, $chunkZ), $toBedrock)){
+								$convertedChunks++;
 							}
 							$totalChunks++;
 						}catch(CorruptedChunkException $e){
@@ -250,11 +247,6 @@ class WorldManager{
 					}
 				}
 			}
-		}
-
-		if($hasChanged){
-			$this->world->setChunk($cx, $cz, $chunk, false);
-			$this->world->unloadChunk($cx, $cz);
 		}
 
 		return $hasChanged;
