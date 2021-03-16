@@ -113,7 +113,8 @@ class WorldManager{
 						$chunkX = Binary::readLInt(substr($key, 0, 4));
 						$chunkZ = Binary::readLInt(substr($key, 4, 4));
 						try{
-							if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
+							//Try to load the chunk. If success returns it.
+							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
 								if($this->convertChunk($chunk, $toBedrock)){
 									$convertedChunks++;
 								}
@@ -135,7 +136,8 @@ class WorldManager{
 					for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
 						for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
 							try{
-								if(($chunk = $this->world->getChunk($chunkX, $chunkZ)) !== null){
+								//Try to load the chunk. If success returns it.
+								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
 									if($this->convertChunk($chunk, $toBedrock)){
 										$convertedChunks++;
 									}
@@ -150,8 +152,6 @@ class WorldManager{
 					}
 				}
 			}
-
-			$this->world->save(true);
 		}catch(Exception $e){
 			$this->loader->getLogger()->critical($e);
 			$status = false;
@@ -253,8 +253,13 @@ class WorldManager{
 		}
 
 		if($hasChanged){
-			$this->world->setChunk($cx, $cz, $chunk, false);
-			$this->world->unloadChunk($cx, $cz);
+			//Marking the chunk as changed, so it can be saved after the conversion.
+			$chunk->setChanged(true);
+
+			//Unload the chunk to free the memory.
+			if(!$this->world->unloadChunk($cx, $cz)){
+				$this->loader->getLogger()->debug("Could not unload the chunk[{$cx};{$cz}]");
+			}
 		}
 
 		return $hasChanged;
