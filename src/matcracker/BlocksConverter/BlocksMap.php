@@ -246,7 +246,7 @@ final class BlocksMap{
 		self::$MAP[BlockIds::DROPPER] = $tempArr;
 
 		$tempArr = [];
-		for($i = 0; $i <= 9; $i++){
+		for($i = 0; $i <= 15; $i++){
 			$tempArr[$i] = [BlockIds::WOODEN_SLAB, $i];
 		}
 		self::$MAP[BlockIds::ACTIVATOR_RAIL] = $tempArr;
