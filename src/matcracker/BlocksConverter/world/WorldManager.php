@@ -10,15 +10,16 @@ use InvalidStateException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\utils\Utils;
-use pocketmine\block\BlockIds;
-use pocketmine\level\format\Chunk;
-use pocketmine\level\format\EmptySubChunk;
-use pocketmine\level\format\io\exception\CorruptedChunkException;
-use pocketmine\level\format\io\leveldb\LevelDB;
-use pocketmine\level\format\io\region\Anvil;
-use pocketmine\level\format\io\region\McRegion;
-use pocketmine\level\format\io\region\PMAnvil;
-use pocketmine\level\Level;
+use pocketmine\block\BlockLegacyIds as BlockIds;
+use pocketmine\block\BlockFactory;
+use pocketmine\world\format\Chunk;
+use pocketmine\world\format\EmptySubChunk;
+use pocketmine\world\format\io\exception\CorruptedChunkException;
+use pocketmine\world\format\io\leveldb\LevelDB;
+use pocketmine\world\format\io\region\Anvil;
+use pocketmine\world\format\io\region\McRegion;
+use pocketmine\world\format\io\region\PMAnvil;
+use pocketmine\world\World;
 use pocketmine\tile\Sign;
 use pocketmine\utils\Binary;
 use pocketmine\utils\TextFormat;
@@ -44,13 +45,13 @@ class WorldManager{
 	private $convertedBlocks = 0;
 	private $convertedSigns = 0;
 
-	public function __construct(Loader $loader, Level $world){
+	public function __construct(Loader $loader, World $world){
 		$this->loader = $loader;
 		$this->world = $world;
 		$this->worldName = $world->getFolderName();
 	}
 
-	public function getWorld() : Level{
+	public function getWorld() : World{
 		return $this->world;
 	}
 
@@ -108,48 +109,12 @@ class WorldManager{
 		$conversionStart = microtime(true);
 		try{
 			if($provider instanceof LevelDB){
-				foreach($provider->getDatabase()->getIterator() as $key => $_){
-					if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
-						$chunkX = Binary::readLInt(substr($key, 0, 4));
-						$chunkZ = Binary::readLInt(substr($key, 4, 4));
-						try{
-							//Try to load the chunk. If success returns it.
-							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-								if($this->convertChunk($chunk, $toBedrock)){
-									$convertedChunks++;
-								}
-							}else{
-								$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
-							}
-							$totalChunks++;
-						}catch(CorruptedChunkException $e){
-							$corruptedChunks++;
-						}
+				foreach ($provider->getAllChunks(true) as $coords => $chunk) {
+					[$chunkX, $chunkZ] = $coords;
+					if($this->convertChunk($chunkX, $chunkZ, $chunk, $toBedrock)){
+						$convertedChunks++;
 					}
-				}
-			}else{
-				foreach($this->createRegionIterator() as $region){
-					$regionX = (int) $region[1];
-					$regionZ = (int) $region[2];
-					$rX = $regionX << 5;
-					$rZ = $regionZ << 5;
-					for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
-						for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
-							try{
-								//Try to load the chunk. If success returns it.
-								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-									if($this->convertChunk($chunk, $toBedrock)){
-										$convertedChunks++;
-									}
-								}else{
-									$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
-								}
-							}catch(CorruptedChunkException $e){
-								$corruptedChunks++;
-							}
-							$totalChunks++;
-						}
-					}
+					$totalChunks++;
 				}
 			}
 		}catch(Exception $e){
@@ -180,15 +145,16 @@ class WorldManager{
 	 *
 	 * @return bool true if the chunk has been converted otherwise false.
 	 */
-	private function convertChunk(Chunk $chunk, bool $toBedrock = true) : bool{
+	private function convertChunk(int $chunkX, int $chunkZ, Chunk $chunk, bool $toBedrock = true) : bool{
 		$hasChanged = false;
-		$cx = $chunk->getX();
-		$cz = $chunk->getZ();
+		//$cx = $chunk->getX();
+		//$cz = $chunk->getZ();
 		$signChunkConverted = false;
 
 		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
+		$blockFac = BlockFactory::getInstance();
 
-		for($y = 0; $y < $chunk->getMaxY(); $y++){
+		for($y = 0; $y < 255; $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
 			if($subChunk instanceof EmptySubChunk){
 				continue;
@@ -196,7 +162,9 @@ class WorldManager{
 
 			for($x = 0; $x < 16; $x++){
 				for($z = 0; $z < 16; $z++){
-					$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
+					$fullBlock = $subChunk->getFullBlock($x, $y & 0x0f, $z);
+					$block = $blockFac->fromFullBlock($fullBlock);
+					$blockId = $block->getId();
 					if($blockId === BlockIds::AIR){
 						continue;
 					}
@@ -207,7 +175,6 @@ class WorldManager{
 							continue;
 						}
 
-						$this->loader->getLogger()->debug("Found a chunk[{$cx};{$cz}] containing signs...");
 						$tiles = $chunk->getTiles();
 						foreach($tiles as $tile){
 							if(!$tile instanceof Sign){
@@ -236,15 +203,15 @@ class WorldManager{
 						$signChunkConverted = true;
 
 					}else{
-						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
+						$blockMeta = $block->getMeta();
 
 						if(!isset($blockMap[$blockId][$blockMeta])){
 							continue;
 						}
 
 						$subMap = $blockMap[$blockId][$blockMeta];
-						$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$subMap[0]}:{$subMap[1]}\"");
-						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
+						$this->loader->getLogger()->info("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$subMap[0]}:{$subMap[1]}\"");
+						$subChunk->setFullBlock($x, $y & 0x0f, $z, ($subMap[0] << 4) | $subMap[1]);
 						$hasChanged = true;
 						$this->convertedBlocks++;
 					}
@@ -254,18 +221,18 @@ class WorldManager{
 
 		if($hasChanged){
 			//Marking the chunk as changed, so it can be saved after the conversion.
-			$chunk->setChanged(true);
+			$this->world->getProvider()->saveChunk($chunkX, $chunkZ, $chunk);
 
 			//Unload the chunk to free the memory.
-			if(!$this->world->unloadChunk($cx, $cz)){
+			/*if(!$this->world->unloadChunk($cx, $cz)){
 				$this->loader->getLogger()->debug("Could not unload the chunk[{$cx};{$cz}]");
-			}
+			}*/
 		}
 
 		return $hasChanged;
 	}
 
-	private function createRegionIterator() : RegexIterator{
+	/*private function createRegionIterator() : RegexIterator{
 		return new RegexIterator(
 			new FilesystemIterator(
 				$this->world->getProvider()->getPath() . 'region/',
@@ -316,5 +283,5 @@ class WorldManager{
 		}
 
 		return $count;
-	}
+	}*/
 }
