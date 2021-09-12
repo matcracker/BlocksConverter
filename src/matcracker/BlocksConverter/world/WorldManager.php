@@ -90,7 +90,7 @@ class WorldManager{
 	public function startConversion(bool $toBedrock = true) : void{
 		//Conversion report variables
 		$status = true;
-		$totalChunks = $convertedChunks = $unloadedChunks = $corruptedChunks = 0;
+		$totalChunks = $convertedChunks = $corruptedChunks = 0;
 		$this->convertedBlocks = $this->convertedSigns = 0;
 
 		if(!$this->hasBackup()){
