@@ -100,13 +100,13 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 			if($provider->getLevelData()->hasTag("BC-converted", ByteTag::class)){
 				$isConvertedToBR = (bool) $provider->getLevelData()->getByte("BC-converted");
 				if(($isConvertedToBR && $toBedrock) || (!$isConvertedToBR && !$toBedrock)){
-					$sender->sendMessage(TextFormat::RED . "The world \"{$worldName}\" is already converted.");
+					$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
 
 					return;
 				}
 
 			}elseif(!$toBedrock){ //Without the tag consider the world coming from java
-				$sender->sendMessage(TextFormat::RED . "The world \"{$worldName}\" is already converted.");
+				$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
 
 				return;
 			}
@@ -116,13 +116,13 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 
 		$manager = new WorldManager($this->loader, $world);
 		if($backup){
-			$sender->sendMessage(TextFormat::GOLD . "Creating a backup of \"{$worldName}\"");
+			$sender->sendMessage(TextFormat::GOLD . "Creating a backup of \"$worldName\"");
 			$manager->backup();
 			$sender->sendMessage(TextFormat::GREEN . "Backup created successfully!");
 		}else{
-			$sender->sendMessage(TextFormat::YELLOW . "No backup will be created for the world \"{$worldName}\"");
+			$sender->sendMessage(TextFormat::YELLOW . "No backup will be created for the world \"$worldName\"");
 		}
-		$sender->sendMessage(TextFormat::AQUA . "Starting {$worldName}'s conversion...");
+		$sender->sendMessage(TextFormat::AQUA . "Starting $worldName's conversion...");
 		$manager->startConversion($toBedrock);
 
 		if($provider instanceof BaseLevelProvider){

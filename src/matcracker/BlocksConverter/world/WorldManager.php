@@ -55,28 +55,28 @@ class WorldManager{
 	}
 
 	public function backup() : void{
-		$this->loader->getLogger()->debug("Creating a backup of {$this->worldName}");
-		$srcPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->worldName}";
-		$destPath = "{$this->loader->getDataFolder()}/backups/{$this->worldName}";
+		$this->loader->getLogger()->debug("Creating a backup of $this->worldName");
+		$srcPath = "{$this->loader->getServer()->getDataPath()}/worlds/$this->worldName";
+		$destPath = "{$this->loader->getDataFolder()}/backups/$this->worldName";
 		Utils::recursiveCopyDirectory($srcPath, $destPath);
 		$this->loader->getLogger()->debug("Backup successfully created");
 	}
 
 	public function restore() : void{
-		$this->loader->getLogger()->debug("Restoring a backup of {$this->worldName}");
-		$srcPath = "{$this->loader->getDataFolder()}/backups/{$this->worldName}";
+		$this->loader->getLogger()->debug("Restoring a backup of $this->worldName");
+		$srcPath = "{$this->loader->getDataFolder()}/backups/$this->worldName";
 		if(!$this->hasBackup()){
 			throw new InvalidStateException("This world never gets a backup.");
 		}
 
-		$destPath = "{$this->loader->getServer()->getDataPath()}/worlds/{$this->worldName}";
+		$destPath = "{$this->loader->getServer()->getDataPath()}/worlds/$this->worldName";
 
 		Utils::recursiveCopyDirectory($srcPath, $destPath);
 		$this->loader->getLogger()->debug("Successfully restored");
 	}
 
 	public function hasBackup() : bool{
-		return file_exists("{$this->loader->getDataFolder()}/backups/{$this->worldName}");
+		return file_exists("{$this->loader->getDataFolder()}/backups/$this->worldName");
 	}
 
 	public function unloadLevel() : bool{
@@ -94,14 +94,14 @@ class WorldManager{
 		$this->convertedBlocks = $this->convertedSigns = 0;
 
 		if(!$this->hasBackup()){
-			$this->loader->getLogger()->warning("The world \"{$this->worldName}\" will be converted without a backup.");
+			$this->loader->getLogger()->warning("The world \"$this->worldName\" will be converted without a backup.");
 		}
 
 		foreach($this->loader->getServer()->getOnlinePlayers() as $player){
 			$player->kick("The server is running a world conversion, try to join later.", false);
 		}
 
-		$this->loader->getLogger()->debug("Starting world \"{$this->worldName}\" conversion...");
+		$this->loader->getLogger()->debug("Starting world \"$this->worldName\" conversion...");
 		$this->isConverting = true;
 		$provider = $this->world->getProvider();
 		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
@@ -120,7 +120,7 @@ class WorldManager{
 									$convertedChunks++;
 								}
 							}else{
-								$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
+								$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
 							}
 							$totalChunks++;
 						}catch(CorruptedChunkException $e){
@@ -145,10 +145,10 @@ class WorldManager{
 
 									//Unload the chunk to free the memory.
 									if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
-										$this->loader->getLogger()->debug("Could not unload the chunk[{$chunkX};{$chunkZ}]");
+										$this->loader->getLogger()->debug("Could not unload the chunk[$chunkX;$chunkZ]");
 									}
 								}else{
-									$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
+									$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
 								}
 							}catch(CorruptedChunkException $e){
 								$corruptedChunks++;
@@ -212,7 +212,7 @@ class WorldManager{
 							continue;
 						}
 
-						$this->loader->getLogger()->debug("Found a chunk[{$cx};{$cz}] containing signs...");
+						$this->loader->getLogger()->debug("Found a chunk[$cx;$cz] containing signs...");
 						$tiles = $chunk->getTiles();
 						foreach($tiles as $tile){
 							if(!$tile instanceof Sign){
@@ -248,7 +248,7 @@ class WorldManager{
 						}
 
 						$subMap = $blockMap[$blockId][$blockMeta];
-						$this->loader->getLogger()->debug("Replaced block \"{$blockId}:{$blockMeta}\" with \"{$subMap[0]}:{$subMap[1]}\"");
+						$this->loader->getLogger()->debug("Replaced block \"$blockId:$blockMeta\" with \"$subMap[0]:$subMap[1]\"");
 						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
 						$hasChanged = true;
 						$this->convertedBlocks++;

@@ -79,20 +79,20 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 						$world = $this->loader->getServer()->getLevelByName($worldName);
 						if($world !== null){
 							WorldQueue::addInQueue(new WorldManager($this->loader, $world));
-							$sender->sendMessage(TextFormat::GREEN . "World \"{$worldName}\" has been added in queue.");
+							$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been added in queue.");
 							continue;
 						}
 					}
-					$sender->sendMessage(TextFormat::RED . "World \"{$worldName}\" isn't loaded or does not exist.");
+					$sender->sendMessage(TextFormat::RED . "World \"$worldName\" isn't loaded or does not exist.");
 				}else{
-					$sender->sendMessage(TextFormat::RED . "World \"{$worldName}\" is already in queue!");
+					$sender->sendMessage(TextFormat::RED . "World \"$worldName\" is already in queue!");
 				}
 			}elseif($action === "remove"){
 				if(WorldQueue::isInQueue($worldName)){
 					WorldQueue::removeFromQueue($worldName);
-					$sender->sendMessage(TextFormat::GREEN . "World \"{$worldName}\" has been removed from the queue.");
+					$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been removed from the queue.");
 				}else{
-					$sender->sendMessage(TextFormat::GREEN . "World \"{$worldName}\" is not in queue.");
+					$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" is not in queue.");
 				}
 			}
 		}
