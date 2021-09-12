@@ -104,6 +104,7 @@ class WorldManager{
 		$this->loader->getLogger()->debug("Starting world \"{$this->worldName}\" conversion...");
 		$this->isConverting = true;
 		$provider = $this->world->getProvider();
+		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
 
 		$conversionStart = microtime(true);
 		try{
@@ -115,7 +116,7 @@ class WorldManager{
 						try{
 							//Try to load the chunk. If success returns it.
 							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-								if($this->convertChunk($chunk, $toBedrock)){
+								if($this->convertChunk($chunk, $blockMap, $toBedrock)){
 									$convertedChunks++;
 								}
 							}else{
@@ -138,7 +139,7 @@ class WorldManager{
 							try{
 								//Try to load the chunk. If success returns it.
 								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-									if($hasChanged = $this->convertChunk($chunk, $toBedrock)){
+									if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
 										$convertedChunks++;
 									}
 
@@ -180,18 +181,17 @@ class WorldManager{
 	}
 
 	/**
-	 * @param Chunk $chunk
-	 * @param bool  $toBedrock
+	 * @param Chunk     $chunk
+	 * @param int[][][] $blockMap
+	 * @param bool      $toBedrock
 	 *
 	 * @return bool true if the chunk has been converted otherwise false.
 	 */
-	private function convertChunk(Chunk $chunk, bool $toBedrock = true) : bool{
+	private function convertChunk(Chunk $chunk, array $blockMap, bool $toBedrock) : bool{
 		$hasChanged = false;
 		$cx = $chunk->getX();
 		$cz = $chunk->getZ();
 		$signChunkConverted = false;
-
-		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
 
 		for($y = 0; $y < $chunk->getMaxY(); $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
