@@ -138,8 +138,13 @@ class WorldManager{
 							try{
 								//Try to load the chunk. If success returns it.
 								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-									if($this->convertChunk($chunk, $toBedrock)){
+									if($hasChanged = $this->convertChunk($chunk, $toBedrock)){
 										$convertedChunks++;
+									}
+
+									//Unload the chunk to free the memory.
+									if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
+										$this->loader->getLogger()->debug("Could not unload the chunk[{$chunkX};{$chunkZ}]");
 									}
 								}else{
 									$this->loader->getLogger()->debug("Could not load chunk[{$chunkX};{$chunkZ}]");
@@ -249,16 +254,6 @@ class WorldManager{
 						$this->convertedBlocks++;
 					}
 				}
-			}
-		}
-
-		if($hasChanged){
-			//Marking the chunk as changed, so it can be saved after the conversion.
-			$chunk->setChanged(true);
-
-			//Unload the chunk to free the memory.
-			if(!$this->world->unloadChunk($cx, $cz)){
-				$this->loader->getLogger()->debug("Could not unload the chunk[{$cx};{$cz}]");
 			}
 		}
 
