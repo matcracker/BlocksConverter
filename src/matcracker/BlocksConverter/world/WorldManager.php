@@ -283,33 +283,4 @@ class WorldManager{
 
 		return null;
 	}
-
-	private function countChunks() : int{
-		$provider = $this->world->getProvider();
-		$count = 0;
-		if($provider instanceof LevelDB){
-			foreach($provider->getDatabase()->getIterator() as $key => $_){
-				if(strlen($key) === 9 && substr($key, -1) === LevelDB::TAG_VERSION){
-					$count++;
-				}
-			}
-		}else{
-			foreach($this->createRegionIterator() as $region){
-				$regionX = ((int) $region[1]);
-				$regionZ = ((int) $region[2]);
-				$rX = $regionX << 5;
-				$rZ = $regionZ << 5;
-				for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
-					for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
-						if($this->world->isChunkGenerated($chunkX, $chunkZ)){
-							$this->world->unloadChunk($chunkX, $chunkZ, false, false);
-							$count++;
-						}
-					}
-				}
-			}
-		}
-
-		return $count;
-	}
 }
