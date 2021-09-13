@@ -116,8 +116,13 @@ class WorldManager{
 						try{
 							//Try to load the chunk. If success returns it.
 							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-								if($this->convertChunk($chunk, $blockMap, $toBedrock)){
+								if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
 									$convertedChunks++;
+								}
+
+								//Unload the chunk to free the memory.
+								if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
+									$this->loader->getLogger()->debug("Could not unload the chunk[$chunkX;$chunkZ]");
 								}
 							}else{
 								$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
