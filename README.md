@@ -1,10 +1,17 @@
+# BlocksConverter
 [![ ](https://poggit.pmmp.io/shield.state/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
 [![ ](https://poggit.pmmp.io/shield.api/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
 [![ ](https://poggit.pmmp.io/shield.dl.total/BlocksConverter)](https://poggit.pmmp.io/p/BlocksConverter)
 [![Discord](https://img.shields.io/discord/620519017148579841.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Uf6U78g)
 
-# BlocksConverter
 BlocksConverter is a **PocketMine-MP plugin** that allows you to translate blocks from MC: Java Edition to Bedrock or vice-versa.
+
+## Supported world conversion
+
+| From               | To         | Supported |
+|--------------------|------------|:---------:|
+| Java 1.13+         | PocketMine | No        |
+| Java 1.12 or lower | PocketMine | Yes       |
 
 ## Important
 This plugin could take some time when converting worlds. While the conversion, **don't** try to stop or turn off the server until it's finished.
@@ -27,7 +34,7 @@ Allows to convert a single world or a queue of world to the platform destination
 
 ### /convertqueue
 
-Allows to manage worlds to be converted. It's useful when you need to convert more than one world.
+Allows managing worlds to be converted. It's useful when you need to convert more than one world.
 
 **Syntax**: /convertqueue <add|remove|status> [world_name|all]
 
