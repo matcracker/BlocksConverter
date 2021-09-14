@@ -15,7 +15,7 @@ final class Loader extends PluginBase implements Listener{
 
 	public function onLoad() : void{
 		@mkdir($this->getDataFolder() . "/backups", 0777, true);
-		BlocksMap::load();
+		BlocksMap::init();
 	}
 
 	public function onEnable() : void{

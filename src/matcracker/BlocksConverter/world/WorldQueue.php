@@ -6,7 +6,7 @@ namespace matcracker\BlocksConverter\world;
 
 final class WorldQueue{
 	/**@var WorldManager[] $queue */
-	private static $queue = [];
+	private static array $queue = [];
 
 	private function __construct(){
 	}

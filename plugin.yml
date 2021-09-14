@@ -1,17 +1,16 @@
 name: BlocksConverter
-version: 2.2.3
-api: 3.0.0
+version: 3.0.0
+api: 4.0.0-BETA2
 author: matcracker
 main: matcracker\BlocksConverter\Loader
 
 permissions:
-    blocksconverter.commands:
-        description: Allows using all plugin commands
+    blocksconverter.command.convertqueue:
+        description: Allows using /convertqueue command.
         default: op
-        children:
-            blocksconverter.command.convertqueue:
-                description: Allows using /convertqueue command.
-            blocksconverter.command.convert:
-                description: Allows using /convert command.
-            blocksconverter.command.toolblock:
-                description: Allows using /toolblock command.
+    blocksconverter.command.convert:
+        description: Allows using /convert command.
+        default: op
+    blocksconverter.command.toolblock:
+        description: Allows using /toolblock command.
+        default: op

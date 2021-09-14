@@ -10,47 +10,43 @@ use InvalidStateException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\utils\Utils;
-use pocketmine\block\BlockIds;
-use pocketmine\level\format\Chunk;
-use pocketmine\level\format\EmptySubChunk;
-use pocketmine\level\format\io\exception\CorruptedChunkException;
-use pocketmine\level\format\io\leveldb\LevelDB;
-use pocketmine\level\format\io\region\Anvil;
-use pocketmine\level\format\io\region\McRegion;
-use pocketmine\level\format\io\region\PMAnvil;
-use pocketmine\level\Level;
-use pocketmine\tile\Sign;
+use pocketmine\block\BaseSign;
+use pocketmine\block\BlockFactory;
+use pocketmine\block\BlockLegacyIds;
+use pocketmine\block\utils\SignText;
+use pocketmine\Server;
 use pocketmine\utils\Binary;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\format\Chunk;
+use pocketmine\world\format\io\leveldb\LevelDB;
+use pocketmine\world\format\io\region\Anvil;
+use pocketmine\world\format\io\region\McRegion;
+use pocketmine\world\format\io\region\PMAnvil;
+use pocketmine\world\format\SubChunk;
+use pocketmine\world\World;
 use RegexIterator;
+use Webmozart\PathUtil\Path;
 use function is_array;
 use function json_decode;
 use function microtime;
 use function number_format;
+use function sprintf;
 use function strlen;
 use function substr;
 use const PHP_EOL;
 
 class WorldManager{
-	/**@var Loader */
-	private $loader;
-	/**@var Level */
-	private $world;
-	/**@var bool */
-	private $isConverting = false;
-	/** @var string */
-	private $worldName;
+	private bool $isConverting;
+	private string $worldName;
 
-	private $convertedBlocks = 0;
-	private $convertedSigns = 0;
+	private int $convertedBlocks;
+	private int $convertedSigns;
 
-	public function __construct(Loader $loader, Level $world){
-		$this->loader = $loader;
-		$this->world = $world;
+	public function __construct(private Loader $loader, private World $world){
 		$this->worldName = $world->getFolderName();
 	}
 
-	public function getWorld() : Level{
+	public function getWorld() : World{
 		return $this->world;
 	}
 
@@ -80,7 +76,7 @@ class WorldManager{
 	}
 
 	public function unloadLevel() : bool{
-		return $this->loader->getServer()->unloadLevel($this->world);
+		return Server::getInstance()->getWorldManager()->unloadWorld($this->world);
 	}
 
 	public function isConverting() : bool{
@@ -98,39 +94,25 @@ class WorldManager{
 		}
 
 		foreach($this->loader->getServer()->getOnlinePlayers() as $player){
-			$player->kick("The server is running a world conversion, try to join later.", false);
+			$player->kick("The server is running a world conversion, try to join later.");
 		}
 
 		$this->loader->getLogger()->debug("Starting world \"$this->worldName\" conversion...");
 		$this->isConverting = true;
 		$provider = $this->world->getProvider();
-		$blockMap = $toBedrock ? BlocksMap::get() : BlocksMap::reverse();
+		$blockMap = $toBedrock ? BlocksMap::getJavaMap() : BlocksMap::getBedrockMap();
 
 		$conversionStart = microtime(true);
 		try{
 			if($provider instanceof LevelDB){
 				foreach($provider->getDatabase()->getIterator() as $key => $_){
-					if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
+					if(strlen($key) === 9 and str_ends_with($key, "v")){ //v => LevelDB::TAG_VERSION
 						$chunkX = Binary::readLInt(substr($key, 0, 4));
 						$chunkZ = Binary::readLInt(substr($key, 4, 4));
-						try{
-							//Try to load the chunk. If success returns it.
-							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-								if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
-									$convertedChunks++;
-								}
-
-								//Unload the chunk to free the memory.
-								if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
-									$this->loader->getLogger()->debug("Could not unload the chunk[$chunkX;$chunkZ]");
-								}
-							}else{
-								$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
-							}
-							$totalChunks++;
-						}catch(CorruptedChunkException $e){
-							$corruptedChunks++;
+						if($this->convertChunk($chunkX, $chunkZ, $blockMap, $toBedrock)){
+							$convertedChunks++;
 						}
+						$totalChunks++;
 					}
 				}
 			}else{
@@ -141,22 +123,8 @@ class WorldManager{
 					$rZ = $regionZ << 5;
 					for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
 						for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
-							try{
-								//Try to load the chunk. If success returns it.
-								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-									if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
-										$convertedChunks++;
-									}
-
-									//Unload the chunk to free the memory.
-									if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
-										$this->loader->getLogger()->debug("Could not unload the chunk[$chunkX;$chunkZ]");
-									}
-								}else{
-									$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
-								}
-							}catch(CorruptedChunkException $e){
-								$corruptedChunks++;
+							if($this->convertChunk($chunkX, $chunkZ, $blockMap, $toBedrock)){
+								$convertedChunks++;
 							}
 							$totalChunks++;
 						}
@@ -186,80 +154,81 @@ class WorldManager{
 	}
 
 	/**
-	 * @param Chunk     $chunk
-	 * @param int[][][] $blockMap
-	 * @param bool      $toBedrock
+	 * @param int   $chunkX
+	 * @param int   $chunkZ
+	 * @param int[] $blockMap
+	 * @param bool  $toBedrock
 	 *
 	 * @return bool true if the chunk has been converted otherwise false.
 	 */
-	private function convertChunk(Chunk $chunk, array $blockMap, bool $toBedrock) : bool{
-		$hasChanged = false;
-		$cx = $chunk->getX();
-		$cz = $chunk->getZ();
-		$signChunkConverted = false;
+	private function convertChunk(int $chunkX, int $chunkZ, array $blockMap, bool $toBedrock) : bool{
+		$chunk = $this->world->loadChunk($chunkX, $chunkZ);
 
-		for($y = 0; $y < $chunk->getMaxY(); $y++){
+		if($chunk === null){
+			$this->loader->getLogger()->debug("Could not load chunk[$chunkX;$chunkZ]");
+
+			return false;
+		}
+
+		$hasChanged = false;
+
+		for($y = $this->world->getMinY(); $y < $this->world->getMaxY(); $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
-			if($subChunk instanceof EmptySubChunk){
+			if($subChunk->isEmptyFast()){
 				continue;
 			}
 
-			for($x = 0; $x < 16; $x++){
-				for($z = 0; $z < 16; $z++){
-					$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
-					if($blockId === BlockIds::AIR){
+			for($x = 0; $x < Chunk::MAX_SUBCHUNKS; $x++){
+				for($z = 0; $z < Chunk::MAX_SUBCHUNKS; $z++){
+					$fullBlockId = $subChunk->getFullBlock($x, $y & SubChunk::COORD_MASK, $z);
+					if($fullBlockId === BlockLegacyIds::AIR){ //Full block ID of Air is always 0
 						continue;
 					}
 
+					$block = BlockFactory::getInstance()->fromFullBlock($fullBlockId);
+
 					//At the moment support sign conversion only from java to bedrock
-					if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && $toBedrock){
-						if($signChunkConverted){
-							continue;
-						}
+					if($block instanceof BaseSign && $toBedrock){
+						$this->loader->getLogger()->debug("Found a chunk[$chunkX;$chunkZ] containing signs...");
+						$lines = ["", "", "", ""];
 
-						$this->loader->getLogger()->debug("Found a chunk[$cx;$cz] containing signs...");
-						$tiles = $chunk->getTiles();
-						foreach($tiles as $tile){
-							if(!$tile instanceof Sign){
-								continue;
-							}
-
-							for($i = 0; $i < 4; $i++){
-								$line = "";
-								$data = json_decode($tile->getLine($i), true);
-								if(is_array($data)){
-									if(isset($data["extra"])){
-										foreach($data["extra"] as $extraData){
-											$line .= Utils::getTextFormatColors()[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
-										}
+						foreach($block->getText()->getLines() as $row => $line){
+							$data = json_decode($line, true);
+							if(is_array($data)){
+								if(isset($data["extra"])){
+									foreach($data["extra"] as $extraData){
+										$lines[$row] .= Utils::getTextFormatColors()[($extraData["color"] ?? "black")] . ($extraData["text"] ?? "");
 									}
-									$line .= $data["text"] ?? "";
-								}else{
-									$line = (string) $data;
 								}
-								$tile->setLine($i, $line);
+								$lines[$row] .= $data["text"] ?? "";
+							}else{
+								$lines[$row] = (string) $data;
 							}
-
-							$hasChanged = true;
-							$this->convertedSigns++;
 						}
-						$signChunkConverted = true;
 
+						$block->setText(new SignText($lines));
+
+						$hasChanged = true;
+						$this->convertedSigns++;
 					}else{
-						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
-
-						if(!isset($blockMap[$blockId][$blockMeta])){
+						if(!isset($blockMap[$fullBlockId])){
 							continue;
 						}
 
-						$subMap = $blockMap[$blockId][$blockMeta];
-						$this->loader->getLogger()->debug("Replaced block \"$blockId:$blockMeta\" with \"$subMap[0]:$subMap[1]\"");
-						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
+						$newBlock = BlockFactory::getInstance()->fromFullBlock($blockMap[$fullBlockId]);
+
+						$this->loader->getLogger()->debug(sprintf("Replaced %d:%d (%s) with %d:%d (%s)", $block->getId(), $block->getMeta(), $block->getName(), $newBlock->getId(), $newBlock->getMeta(), $newBlock->getName()));
+						$subChunk->setFullBlock($x, $y & SubChunk::COORD_MASK, $z, $blockMap[$fullBlockId]);
 						$hasChanged = true;
 						$this->convertedBlocks++;
 					}
 				}
 			}
+		}
+
+		//Unload the chunk to free the memory.
+		if(!$this->world->unloadChunk($chunkX, $chunkZ, true, $hasChanged)){
+			$this->loader->getLogger()->debug("Could not unload the chunk[$chunkX;$chunkZ]");
 		}
 
 		return $hasChanged;
@@ -268,7 +237,7 @@ class WorldManager{
 	private function createRegionIterator() : RegexIterator{
 		return new RegexIterator(
 			new FilesystemIterator(
-				$this->world->getProvider()->getPath() . 'region/',
+				Path::join($this->world->getProvider()->getPath(), "region"),
 				FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS | FilesystemIterator::UNIX_PATHS
 			),
 			'/\/r\.(-?\d+)\.(-?\d+)\.' . $this->getWorldExtension() . '$/',
@@ -277,13 +246,13 @@ class WorldManager{
 	}
 
 	private function getWorldExtension() : ?string{
-		$providerName = $this->world->getProvider()->getProviderName();
-		if($providerName === Anvil::getProviderName()){
-			return Anvil::REGION_FILE_EXTENSION;
-		}else if($providerName === McRegion::getProviderName()){
-			return McRegion::REGION_FILE_EXTENSION;
-		}else if($providerName === PMAnvil::getProviderName()){
-			return PMAnvil::REGION_FILE_EXTENSION;
+		$provider = $this->world->getProvider();
+		if($provider instanceof Anvil){
+			return "mca";
+		}else if($provider instanceof McRegion){
+			return "mcr";
+		}else if($provider instanceof PMAnvil){
+			return "mcapm";
 		}
 
 		return null;
