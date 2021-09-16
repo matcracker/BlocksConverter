@@ -9,11 +9,11 @@ use matcracker\BlocksConverter\world\WorldManager;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\nbt\tag\ByteTag;
+use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\plugin\PluginOwned;
-use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\format\io\BaseWorldProvider;
+use pocketmine\world\format\io\data\BaseNbtWorldData;
 use pocketmine\world\World;
 use function filter_var;
 use function strtolower;
@@ -95,17 +95,25 @@ final class Convert extends Command implements PluginOwned{
 
 	private function convert(World $world, CommandSender $sender, bool $backup, bool $toBedrock, bool $force) : void{
 		$provider = $world->getProvider();
+		if(!($provider instanceof BaseWorldProvider)){
+			return;
+		}
+		$worldData = $provider->getWorldData();
+		if(!($worldData instanceof BaseNbtWorldData)){
+			return;
+		}
+
 		$worldName = $world->getFolderName();
 
-		if($provider instanceof BaseWorldProvider && !$force){
-			if($provider->getWorldData()->hasTag("BC-converted", ByteTag::class)){
-				$isConvertedToBR = (bool) $provider->getLevelData()->getByte("BC-converted");
+		if(!$force){
+			$compoundTag = $worldData->getCompoundTag()->getCompoundTag("BlocksConverter");
+			if($compoundTag !== null){
+				$isConvertedToBR = (bool) $compoundTag->getByte("converted", 0);
 				if(($isConvertedToBR && $toBedrock) || (!$isConvertedToBR && !$toBedrock)){
 					$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
 
 					return;
 				}
-
 			}elseif(!$toBedrock){ //Without the tag consider the world coming from java
 				$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
 
@@ -126,10 +134,10 @@ final class Convert extends Command implements PluginOwned{
 		$sender->sendMessage(TextFormat::AQUA . "Starting $worldName's conversion...");
 		$manager->startConversion($toBedrock);
 
-		if($provider instanceof BaseWorldProvider){
-			$provider->getWorldData()->setByte("BC-converted", (int) $toBedrock);
-			$provider->saveLevelData();
-		}
+		$worldData->getCompoundTag()->setTag(
+			"BlocksConverter",
+			(new CompoundTag())->setByte("converted", (int) $toBedrock)
+		);
 	}
 
 	public function getOwningPlugin() : Loader{

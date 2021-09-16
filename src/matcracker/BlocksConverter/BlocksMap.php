@@ -346,7 +346,7 @@ final class BlocksMap{
 				$bedrockId = (int) $bedrockData[0];
 				$bedrockMeta = (int) $bedrockData[1];
 
-				self::$map[self::toFullBlockId($bedrockId, $bedrockMeta)] = self::toFullBlockId($javaId, $javaMeta);
+				self::$map[self::toFullBlockId($javaId, $javaMeta)] = self::toFullBlockId($bedrockId, $bedrockMeta);
 			}
 		}
 	}
