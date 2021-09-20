@@ -2,19 +2,14 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter;
+namespace matcracker\BlocksConverter\translationMaps;
 
-use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
-use function array_flip;
 
-final class BlocksMap{
+final class JavaBlocksTranslationMap extends BlocksTranslationMap{
 
-	/** @var int[] */
-	private static array $map = [];
-
-	public static function init() : void{
-		$legacyMap = [
+	public function __construct(){
+		$this->map = [
 			BlockLegacyIds::DIRT => [
 				2 => [BlockLegacyIds::PODZOL, 0]
 			],
@@ -231,138 +226,91 @@ final class BlocksMap{
 			]
 		];
 
-		$tempArr = [];
 		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$tempArr[$i] = [BlockLegacyIds::STONE_BUTTON, $j];
+			$this->map[BlockLegacyIds::STONE_BUTTON][$i] = [BlockLegacyIds::STONE_BUTTON, $j];
 		}
-		$legacyMap[BlockLegacyIds::STONE_BUTTON] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::STAINED_GLASS, $i];
+			$this->map[BlockLegacyIds::INVISIBLE_BEDROCK][$i] = [BlockLegacyIds::STAINED_GLASS, $i];
 		}
-		$legacyMap[BlockLegacyIds::INVISIBLE_BEDROCK] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 5; $i++){
-			$tempArr[$i] = [BlockLegacyIds::DOUBLE_WOODEN_SLAB, $i];
+			$this->map[BlockLegacyIds::DROPPER][$i] = [BlockLegacyIds::DOUBLE_WOODEN_SLAB, $i];
 		}
-		$legacyMap[BlockLegacyIds::DROPPER] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::WOODEN_SLAB, $i];
+			$this->map[BlockLegacyIds::ACTIVATOR_RAIL][$i] = [BlockLegacyIds::WOODEN_SLAB, $i];
 		}
-		$legacyMap[BlockLegacyIds::ACTIVATOR_RAIL] = $tempArr;
 
-		$tempArr = [];
 		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$tempArr[$i] = [BlockLegacyIds::WOODEN_BUTTON, $j];
+			$this->map[BlockLegacyIds::WOODEN_BUTTON][$i] = [BlockLegacyIds::WOODEN_BUTTON, $j];
 		}
-		$legacyMap[BlockLegacyIds::WOODEN_BUTTON] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 9; $i++){
-			$tempArr[$i] = [BlockLegacyIds::ACTIVATOR_RAIL, $i];
+			$this->map[BlockLegacyIds::DOUBLE_WOODEN_SLAB][$i] = [BlockLegacyIds::ACTIVATOR_RAIL, $i];
 		}
-		$legacyMap[BlockLegacyIds::DOUBLE_WOODEN_SLAB] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 5; $i++){
-			$tempArr[$i] = [BlockLegacyIds::DROPPER, $i];
+			$this->map[BlockLegacyIds::WOODEN_SLAB][$i] = [BlockLegacyIds::DROPPER, $i];
 		}
-		$legacyMap[BlockLegacyIds::WOODEN_SLAB] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::END_ROD, $i];
+			$this->map[BlockLegacyIds::GRASS_PATH][$i] = [BlockLegacyIds::END_ROD, $i];
 		}
-		$tempArr[2] = [BlockLegacyIds::END_ROD, 3];
-		$tempArr[3] = [BlockLegacyIds::END_ROD, 2];
-		$tempArr[4] = [BlockLegacyIds::END_ROD, 5];
-		$tempArr[5] = [BlockLegacyIds::END_ROD, 4];
-		$legacyMap[BlockLegacyIds::GRASS_PATH] = $tempArr;
+		$this->map[BlockLegacyIds::GRASS_PATH][2] = [BlockLegacyIds::END_ROD, 3];
+		$this->map[BlockLegacyIds::GRASS_PATH][3] = [BlockLegacyIds::END_ROD, 2];
+		$this->map[BlockLegacyIds::GRASS_PATH][4] = [BlockLegacyIds::END_ROD, 5];
+		$this->map[BlockLegacyIds::GRASS_PATH][5] = [BlockLegacyIds::END_ROD, 4];
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::CHORUS_PLANT, $i];
+			$this->map[BlockLegacyIds::ITEM_FRAME_BLOCK][$i] = [BlockLegacyIds::CHORUS_PLANT, $i];
 		}
-		$legacyMap[BlockLegacyIds::ITEM_FRAME_BLOCK] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 7; $i++){
-			$tempArr[$i] = [BlockLegacyIds::BEETROOT_BLOCK, $i];
+			$this->map[BlockLegacyIds::FROSTED_ICE][$i] = [BlockLegacyIds::BEETROOT_BLOCK, $i];
 		}
-		$legacyMap[BlockLegacyIds::FROSTED_ICE] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::REPEATING_COMMAND_BLOCK, $i];
+			$this->map[210][$i] = [BlockLegacyIds::REPEATING_COMMAND_BLOCK, $i];
 		}
-		$legacyMap[210] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::CHAIN_COMMAND_BLOCK, $i];
+			$this->map[211][$i] = [BlockLegacyIds::CHAIN_COMMAND_BLOCK, $i];
 		}
-		$legacyMap[211] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::OBSERVER, $i];
+			$this->map[BlockLegacyIds::SHULKER_BOX][$i] = [BlockLegacyIds::OBSERVER, $i];
 		}
-		$legacyMap[BlockLegacyIds::SHULKER_BOX] = $tempArr;
 
-		$tempArr = [];
 		//Glazed terracotta to shulker box
 		for($i = BlockLegacyIds::PURPLE_GLAZED_TERRACOTTA; $i <= BlockLegacyIds::RED_GLAZED_TERRACOTTA; $i++){
 			if($i === BlockLegacyIds::CYAN_GLAZED_TERRACOTTA){
 				for($k = 0; $k <= 15; $k++){
-					$tempArr[$k] = [BlockLegacyIds::UNDYED_SHULKER_BOX, $j];
+					$this->map[$i][$k] = [BlockLegacyIds::UNDYED_SHULKER_BOX, $j];
 				}
 			}else{
 				for($k = 0; $k <= 15; $k++){
-					$tempArr[$k] = [BlockLegacyIds::SHULKER_BOX, $j];
+					$this->map[$i][$k] = [BlockLegacyIds::SHULKER_BOX, $j];
 				}
 			}
-			$legacyMap[$i] = $tempArr;
 			$j++;
 		}
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::CONCRETE, $i];
+			$this->map[BlockLegacyIds::OBSERVER][$i] = [BlockLegacyIds::CONCRETE, $i];
 		}
-		$legacyMap[BlockLegacyIds::OBSERVER] = $tempArr;
 
-		$tempArr = [];
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockLegacyIds::CONCRETE_POWDER, $i];
+			$this->map[BlockLegacyIds::STRUCTURE_BLOCK][$i] = [BlockLegacyIds::CONCRETE_POWDER, $i];
 		}
-		$legacyMap[BlockLegacyIds::STRUCTURE_BLOCK] = $tempArr;
 
-		foreach($legacyMap as $javaId => $javaData){
+		foreach($this->map as $javaId => $javaData){
 			foreach($javaData as $javaMeta => $bedrockData){
 				$bedrockId = (int) $bedrockData[0];
 				$bedrockMeta = (int) $bedrockData[1];
 
-				self::$map[self::toFullBlockId($javaId, $javaMeta)] = self::toFullBlockId($bedrockId, $bedrockMeta);
+				$this->map[self::toFullBlockId($javaId, $javaMeta)] = self::toFullBlockId($bedrockId, $bedrockMeta);
 			}
 		}
-	}
-
-	private static function toFullBlockId(int $blockId, int $blockMeta) : int{
-		return ($blockId << Block::INTERNAL_METADATA_BITS) | $blockMeta;
-	}
-
-	public static function getBedrockMap() : array{
-		return array_flip(self::$map);
-	}
-
-	/**
-	 * @return int[]
-	 */
-	public static function getJavaMap() : array{
-		return self::$map;
 	}
 }

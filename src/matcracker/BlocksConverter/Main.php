@@ -11,11 +11,10 @@ use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\PluginBase;
 
-final class Loader extends PluginBase implements Listener{
+final class Main extends PluginBase implements Listener{
 
 	public function onLoad() : void{
 		@mkdir($this->getDataFolder() . "/backups", 0777, true);
-		BlocksMap::init();
 	}
 
 	public function onEnable() : void{
@@ -29,9 +28,5 @@ final class Loader extends PluginBase implements Listener{
 
 	public function onPlayerQuit(PlayerQuitEvent $event) : void{
 		ToolBlock::removePlayer($event->getPlayer());
-	}
-
-	public function onDisable() : void{
-		$this->getScheduler()->cancelAllTasks();
 	}
 }

@@ -2,7 +2,7 @@ name: BlocksConverter
 version: 3.0.0
 api: 4.0.0-BETA2
 author: matcracker
-main: matcracker\BlocksConverter\Loader
+main: matcracker\BlocksConverter\Main
 
 permissions:
     blocksconverter.command.convertqueue:

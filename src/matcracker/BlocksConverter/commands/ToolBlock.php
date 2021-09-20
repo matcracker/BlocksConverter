@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\commands;
 
-use matcracker\BlocksConverter\Loader;
+use matcracker\BlocksConverter\Main;
 use matcracker\BlocksConverter\tasks\ToolBlockTask;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
@@ -16,15 +16,14 @@ use function count;
 final class ToolBlock extends Command implements PluginOwned{
 	/**@var Player[] */
 	private static array $players = [];
-	private Loader $loader;
 
-	public function __construct(Loader $loader){
+	public function __construct(private Main $plugin){
 		parent::__construct(
-			'toolblock',
-			'Allows to get information about the block you are looking at.',
-			'/toolblock'
+			"toolblock",
+			"Allows to get information about the block you are looking at.",
+			"/toolblock"
 		);
-		$this->loader = $loader;
+		$this->setPermission("blocksconverter.command.toolblock");
 	}
 
 	/**
@@ -35,16 +34,14 @@ final class ToolBlock extends Command implements PluginOwned{
 	}
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args) : bool{
-		if(!$sender->hasPermission("blocksconverter.command.toolblock")){
-			$sender->sendMessage(TextFormat::RED . "You don't have permission to run this command!");
-
-			return false;
+		if(!$this->testPermission($sender)){
+			return true;
 		}
 
 		if(!($sender instanceof Player)){
 			$sender->sendMessage(TextFormat::RED . "You must run this command in-game.");
 
-			return false;
+			return true;
 		}
 
 		$senderName = $sender->getName();
@@ -55,7 +52,7 @@ final class ToolBlock extends Command implements PluginOwned{
 			$sender->sendMessage(TextFormat::GREEN . "ToolBlock enabled.");
 
 			if(count(self::$players) === 1){
-				$this->loader->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
+				$this->plugin->getScheduler()->scheduleRepeatingTask(new ToolBlockTask(), 5);
 			}
 		}
 
@@ -72,7 +69,7 @@ final class ToolBlock extends Command implements PluginOwned{
 		return false;
 	}
 
-	public function getOwningPlugin() : Loader{
-		return $this->loader;
+	public function getOwningPlugin() : Main{
+		return $this->plugin;
 	}
 }

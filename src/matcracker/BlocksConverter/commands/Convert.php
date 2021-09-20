@@ -4,143 +4,140 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\commands;
 
-use matcracker\BlocksConverter\Loader;
-use matcracker\BlocksConverter\world\WorldManager;
+use matcracker\BlocksConverter\Main;
+use matcracker\BlocksConverter\translationMaps\JavaBlocksTranslationMap;
+use matcracker\BlocksConverter\world\LevelDBWorldTranslator;
+use matcracker\BlocksConverter\world\RegionWorldTranslator;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\utils\InvalidCommandSyntaxException;
+use pocketmine\console\ConsoleCommandSender;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\plugin\PluginOwned;
+use pocketmine\Server;
 use pocketmine\utils\TextFormat;
-use pocketmine\world\format\io\BaseWorldProvider;
 use pocketmine\world\format\io\data\BaseNbtWorldData;
-use pocketmine\world\World;
+use pocketmine\world\format\io\leveldb\LevelDB;
+use pocketmine\world\format\io\region\RegionWorldProvider;
 use function filter_var;
 use function strtolower;
 use const FILTER_VALIDATE_BOOLEAN;
 
 final class Convert extends Command implements PluginOwned{
-	private Loader $loader;
 
-	public function __construct(Loader $loader){
+	public function __construct(private Main $plugin){
 		parent::__construct(
-			'convert',
-			'Allows to convert immediately a world or all queued worlds.',
-			'/convert <world_name|queue> [backup] [plat_dest] [force]'
+			"convert",
+			"Allows to convert immediately a world or all queued worlds.",
+			"/convert <world_name|queue> [backup] [force]"
 		);
-		$this->loader = $loader;
+		$this->setPermission("blocksconverter.command.convert");
 	}
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args) : bool{
-		if(!$sender->hasPermission("blocksconverter.command.convert")){
-			$sender->sendMessage(TextFormat::RED . "You don't have permission to run this command!");
+		if(!$this->testPermission($sender)){
+			return true;
+		}
 
-			return false;
+		if(!($sender instanceof ConsoleCommandSender)){
+			$sender->sendMessage(TextFormat::RED . "You must run this command from console.");
+
+			return true;
 		}
 
 		if(count($args) < 1 || count($args) > 4){
-			$sender->sendMessage($this->getUsage());
-
-			return false;
+			throw new InvalidCommandSyntaxException();
 		}
+
 		$worldOption = (string) $args[0];
-		$backup = isset($args[1]) ? (bool) filter_var($args[1], FILTER_VALIDATE_BOOLEAN) : true;
+		$backup = !isset($args[1]) || filter_var($args[1], FILTER_VALIDATE_BOOLEAN);
 
-		if(isset($args[2])){
-			switch(strtolower($args[2])){
-				case "bedrock":
-					$toBedrock = true;
-					break;
-				case "java":
-					$toBedrock = false;
-					break;
-				default:
-					$sender->sendMessage(TextFormat::RED . "The world conversion format is not supported. Choose \"bedrock\" or \"java\"");
-
-					return true;
-			}
-
-		}else{
-			$toBedrock = true;
-
-		}
-
-		//Force to convert to the specific world format.
-		$force = isset($args[3]) ? (bool) filter_var($args[3], FILTER_VALIDATE_BOOLEAN) : false;
+		//Force converting to the specific world format.
+		$force = isset($args[3]) && filter_var($args[3], FILTER_VALIDATE_BOOLEAN);
 
 		if(strtolower($worldOption) === "queue"){
-			if(!WorldQueue::isEmpty()){
-				$queued = WorldQueue::getQueue();
-				foreach($queued as $queue){
-					$this->convert($queue->getWorld(), $sender, $backup, $toBedrock, $force);
-				}
-			}else{
-				$sender->sendMessage(TextFormat::RED . "The queue is empty.");
+			if(WorldQueue::isEmpty()){
+				$this->plugin->getLogger()->info("The queue is empty.");
+
+				return true;
 			}
+
+			$worlds = WorldQueue::getAll();
 		}else{
-			$worldManager = $this->loader->getServer()->getWorldManager();
-			if($worldManager->loadWorld($worldOption)){
-				$world = $worldManager->getWorldByName($worldOption);
-				if($world !== null){
-					$this->convert($world, $sender, $backup, $toBedrock, $force);
+			$worldManager = Server::getInstance()->getWorldManager();
+			if(!$worldManager->loadWorld($worldOption)){
+				$this->plugin->getLogger()->warning("World \"$worldOption\" isn't loaded or does not exist.");
+
+				return true;
+			}
+
+			$world = $worldManager->getWorldByName($worldOption);
+			if($world === null){
+				$this->plugin->getLogger()->warning("World \"$worldOption\" isn't loaded or does not exist.");
+
+				return true;
+			}
+
+			$worlds[] = $world;
+		}
+
+		$translationMap = new JavaBlocksTranslationMap();
+
+		foreach($worlds as $world){
+			$provider = $world->getProvider();
+			$worldName = $world->getFolderName();
+
+			if($provider instanceof LevelDB){
+				$translator = new LevelDBWorldTranslator($this->plugin, $world, $translationMap);
+			}elseif($provider instanceof RegionWorldProvider){
+				$translator = new RegionWorldTranslator($this->plugin, $world, $translationMap);
+			}else{
+				//TODO
+				continue;
+			}
+
+			$worldData = $provider->getWorldData();
+			if(!($worldData instanceof BaseNbtWorldData)){
+				//TODO
+				continue;
+			}
+
+			if(!$force){
+				$translated = (bool) $worldData->getCompoundTag()->getCompoundTag("BlocksConverter")?->getByte("translated", 0);
+				if($translated){
+					$this->plugin->getLogger()->notice("The world \"$worldName\" is already converted.");
+					continue;
+				}
+			}
+
+			$this->plugin->getLogger()->notice("This process could takes a lot of time, so don't join or quit the game and wait patently the finish!");
+
+			if($backup){
+				$this->plugin->getLogger()->info("Creating a backup for the world \"$worldName\"");
+				if($translator->backup()){
+					$this->plugin->getLogger()->notice("Backup successfully created for the world \"$worldName\".");
+				}else{
+					$this->plugin->getLogger()->warning("Could not create a backup for the world \"$worldName\"");
 
 					return true;
 				}
+			}else{
+				$this->plugin->getLogger()->warning("No backup will be created for the world \"$worldName\"");
 			}
-			$sender->sendMessage(TextFormat::RED . "World {$worldOption} isn't loaded or does not exist.");
+			$this->plugin->getLogger()->info("Converting the world \"$worldName\".");
+			$translator->translate()->printReport();
+
+			$worldData->getCompoundTag()->setTag(
+				"BlocksConverter",
+				(new CompoundTag())->setByte("translated", 1)
+			);
 		}
 
 		return true;
 	}
 
-	private function convert(World $world, CommandSender $sender, bool $backup, bool $toBedrock, bool $force) : void{
-		$provider = $world->getProvider();
-		if(!($provider instanceof BaseWorldProvider)){
-			return;
-		}
-		$worldData = $provider->getWorldData();
-		if(!($worldData instanceof BaseNbtWorldData)){
-			return;
-		}
-
-		$worldName = $world->getFolderName();
-
-		if(!$force){
-			$compoundTag = $worldData->getCompoundTag()->getCompoundTag("BlocksConverter");
-			if($compoundTag !== null){
-				$isConvertedToBR = (bool) $compoundTag->getByte("converted", 0);
-				if(($isConvertedToBR && $toBedrock) || (!$isConvertedToBR && !$toBedrock)){
-					$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
-
-					return;
-				}
-			}elseif(!$toBedrock){ //Without the tag consider the world coming from java
-				$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
-
-				return;
-			}
-		}
-
-		$sender->sendMessage(TextFormat::DARK_AQUA . "This process could takes a lot of time, so don't join or quit the game and wait patently the finish!");
-
-		$manager = new WorldManager($this->loader, $world);
-		if($backup){
-			$sender->sendMessage(TextFormat::GOLD . "Creating a backup of \"$worldName\"");
-			$manager->backup();
-			$sender->sendMessage(TextFormat::GREEN . "Backup created successfully!");
-		}else{
-			$sender->sendMessage(TextFormat::YELLOW . "No backup will be created for the world \"$worldName\"");
-		}
-		$sender->sendMessage(TextFormat::AQUA . "Starting $worldName's conversion...");
-		$manager->startConversion($toBedrock);
-
-		$worldData->getCompoundTag()->setTag(
-			"BlocksConverter",
-			(new CompoundTag())->setByte("converted", (int) $toBedrock)
-		);
-	}
-
-	public function getOwningPlugin() : Loader{
-		return $this->loader;
+	public function getOwningPlugin() : Main{
+		return $this->plugin;
 	}
 }

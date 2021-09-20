@@ -4,35 +4,43 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\world;
 
+use pocketmine\world\World;
+use function count;
+
 final class WorldQueue{
-	/**@var WorldManager[] $queue */
+
+	/**@var World[] $queue */
 	private static array $queue = [];
 
 	private function __construct(){
 	}
 
-	public static function addInQueue(WorldManager $worldManager) : void{
-		self::$queue[$worldManager->getWorld()->getFolderName()] = $worldManager;
+	public static function add(World $world) : void{
+		self::$queue[$world->getFolderName()] = $world;
 	}
 
 	public static function isEmpty() : bool{
-		return empty(self::$queue);
+		return count(self::$queue) === 0;
 	}
 
-	public static function removeFromQueue(string $worldName) : void{
-		if(self::isInQueue($worldName)){
-			unset(self::$queue[$worldName]);
+	public static function remove(World $world) : void{
+		if(self::isPresent($world)){
+			unset(self::$queue[$world->getFolderName()]);
 		}
 	}
 
-	public static function isInQueue(string $worldName) : bool{
-		return isset(self::$queue[$worldName]);
+	public static function isPresent(World $world) : bool{
+		return isset(self::$queue[$world->getFolderName()]);
 	}
 
 	/**
-	 * @return WorldManager[]
+	 * @return World[]
 	 */
-	public static function getQueue() : array{
+	public static function getAll() : array{
 		return self::$queue;
+	}
+
+	public static function get(string $worldName) : World{
+		return self::$queue[$worldName];
 	}
 }

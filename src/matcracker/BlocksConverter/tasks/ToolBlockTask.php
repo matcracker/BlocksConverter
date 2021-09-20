@@ -7,6 +7,7 @@ namespace matcracker\BlocksConverter\tasks;
 use matcracker\BlocksConverter\commands\ToolBlock;
 use pocketmine\block\Air;
 use pocketmine\scheduler\Task;
+use pocketmine\utils\TextFormat;
 use function count;
 
 final class ToolBlockTask extends Task{
@@ -24,7 +25,7 @@ final class ToolBlockTask extends Task{
 			$block = $player->getTargetBlock(5);
 			if($block !== null && !($block instanceof Air)){
 				$pos = $block->getPosition();
-				$message = "{$block->getName()} (ID: {$block->getId()} Meta: {$block->getMeta()})\n";
+				$message = "{$block->getName()} (ID: {$block->getId()} Meta: {$block->getMeta()})" . TextFormat::EOL;
 				$message .= "X: {$pos->getX()} Y: {$pos->getY()} Z: {$pos->getZ()}";
 				$player->sendTip($message);
 			}
