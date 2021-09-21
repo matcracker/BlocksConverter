@@ -9,7 +9,6 @@ use ArrayIterator;
 use Countable;
 use IteratorAggregate;
 use JsonSerializable;
-use pocketmine\block\Block;
 use RuntimeException;
 use function count;
 
@@ -17,10 +16,6 @@ abstract class BlocksTranslationMap implements ArrayAccess, IteratorAggregate, C
 
 	/** @var array<int, int> */
 	protected array $map;
-
-	final protected static function toFullBlockId(int $blockId, int $blockMeta) : int{
-		return ($blockId << Block::INTERNAL_METADATA_BITS) | $blockMeta;
-	}
 
 	final public function offsetExists(mixed $offset) : bool{
 		return isset($this->map[$offset]);
@@ -42,7 +37,7 @@ abstract class BlocksTranslationMap implements ArrayAccess, IteratorAggregate, C
 		return new ArrayIterator($this->map);
 	}
 
-	public function count() : int{
+	final public function count() : int{
 		return count($this->map);
 	}
 

@@ -1,25 +1,20 @@
 <?php
+
 declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\utils;
 
+use pocketmine\block\Block;
 use pocketmine\utils\TextFormat;
 use ReflectionClass;
 
-class Utils{
-	public static function recursiveCopyDirectory(string $src, string $dst) : void{
-		$dir = opendir($src);
-		@mkdir($dst);
-		while(($file = readdir($dir)) !== false){
-			if($file !== "." && $file !== ".."){
-				if(is_dir($src . DIRECTORY_SEPARATOR . $file)){
-					self::recursiveCopyDirectory($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
-				}else{
-					copy($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
-				}
-			}
-		}
-		closedir($dir);
+final class Utils{
+
+	private function __construct(){
+	}
+
+	public static function toFullBlockId(int $blockId, int $blockMeta) : int{
+		return ($blockId << Block::INTERNAL_METADATA_BITS) | $blockMeta;
 	}
 
 	public static function getTextFormatColors() : array{

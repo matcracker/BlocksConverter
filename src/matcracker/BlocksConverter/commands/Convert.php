@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace matcracker\BlocksConverter\commands;
 
 use matcracker\BlocksConverter\Main;
-use matcracker\BlocksConverter\translationMaps\JavaBlocksTranslationMap;
+use matcracker\BlocksConverter\translationMaps\RegionBlocksTranslationMap;
 use matcracker\BlocksConverter\world\LevelDBWorldTranslator;
 use matcracker\BlocksConverter\world\RegionWorldTranslator;
 use matcracker\BlocksConverter\world\WorldQueue;
@@ -82,16 +82,16 @@ final class Convert extends Command implements PluginOwned{
 			$worlds[] = $world;
 		}
 
-		$translationMap = new JavaBlocksTranslationMap();
+		$translationMap = new RegionBlocksTranslationMap();
 
 		foreach($worlds as $world){
 			$provider = $world->getProvider();
 			$worldName = $world->getFolderName();
 
 			if($provider instanceof LevelDB){
-				$translator = new LevelDBWorldTranslator($this->plugin, $world, $translationMap);
+				$translator = new LevelDBWorldTranslator($this->plugin, $sender, $world, $translationMap);
 			}elseif($provider instanceof RegionWorldProvider){
-				$translator = new RegionWorldTranslator($this->plugin, $world, $translationMap);
+				$translator = new RegionWorldTranslator($this->plugin, $sender, $world, $translationMap);
 			}else{
 				//TODO
 				continue;
@@ -123,8 +123,9 @@ final class Convert extends Command implements PluginOwned{
 					return true;
 				}
 			}else{
-				$this->plugin->getLogger()->warning("No backup will be created for the world \"$worldName\"");
+				$this->plugin->getLogger()->info("No backup will be created for the world \"$worldName\"");
 			}
+
 			$this->plugin->getLogger()->info("Converting the world \"$worldName\".");
 			$translator->translate()->printReport();
 

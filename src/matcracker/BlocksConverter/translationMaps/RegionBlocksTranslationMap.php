@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter\translationMaps;
 
+use matcracker\BlocksConverter\utils\Utils;
 use pocketmine\block\BlockLegacyIds;
 
-final class JavaBlocksTranslationMap extends BlocksTranslationMap{
+final class RegionBlocksTranslationMap extends BlocksTranslationMap{
 
 	public function __construct(){
-		$this->map = [
+		$tempMap = [
 			BlockLegacyIds::DIRT => [
 				2 => [BlockLegacyIds::PODZOL, 0]
 			],
@@ -227,89 +228,89 @@ final class JavaBlocksTranslationMap extends BlocksTranslationMap{
 		];
 
 		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$this->map[BlockLegacyIds::STONE_BUTTON][$i] = [BlockLegacyIds::STONE_BUTTON, $j];
+			$tempMap[BlockLegacyIds::STONE_BUTTON][$i] = [BlockLegacyIds::STONE_BUTTON, $j];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::INVISIBLE_BEDROCK][$i] = [BlockLegacyIds::STAINED_GLASS, $i];
+			$tempMap[BlockLegacyIds::INVISIBLE_BEDROCK][$i] = [BlockLegacyIds::STAINED_GLASS, $i];
 		}
 
 		for($i = 0; $i <= 5; $i++){
-			$this->map[BlockLegacyIds::DROPPER][$i] = [BlockLegacyIds::DOUBLE_WOODEN_SLAB, $i];
+			$tempMap[BlockLegacyIds::DROPPER][$i] = [BlockLegacyIds::DOUBLE_WOODEN_SLAB, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::ACTIVATOR_RAIL][$i] = [BlockLegacyIds::WOODEN_SLAB, $i];
+			$tempMap[BlockLegacyIds::ACTIVATOR_RAIL][$i] = [BlockLegacyIds::WOODEN_SLAB, $i];
 		}
 
 		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$this->map[BlockLegacyIds::WOODEN_BUTTON][$i] = [BlockLegacyIds::WOODEN_BUTTON, $j];
+			$tempMap[BlockLegacyIds::WOODEN_BUTTON][$i] = [BlockLegacyIds::WOODEN_BUTTON, $j];
 		}
 
 		for($i = 0; $i <= 9; $i++){
-			$this->map[BlockLegacyIds::DOUBLE_WOODEN_SLAB][$i] = [BlockLegacyIds::ACTIVATOR_RAIL, $i];
+			$tempMap[BlockLegacyIds::DOUBLE_WOODEN_SLAB][$i] = [BlockLegacyIds::ACTIVATOR_RAIL, $i];
 		}
 
 		for($i = 0; $i <= 5; $i++){
-			$this->map[BlockLegacyIds::WOODEN_SLAB][$i] = [BlockLegacyIds::DROPPER, $i];
+			$tempMap[BlockLegacyIds::WOODEN_SLAB][$i] = [BlockLegacyIds::DROPPER, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::GRASS_PATH][$i] = [BlockLegacyIds::END_ROD, $i];
+			$tempMap[BlockLegacyIds::GRASS_PATH][$i] = [BlockLegacyIds::END_ROD, $i];
 		}
-		$this->map[BlockLegacyIds::GRASS_PATH][2] = [BlockLegacyIds::END_ROD, 3];
-		$this->map[BlockLegacyIds::GRASS_PATH][3] = [BlockLegacyIds::END_ROD, 2];
-		$this->map[BlockLegacyIds::GRASS_PATH][4] = [BlockLegacyIds::END_ROD, 5];
-		$this->map[BlockLegacyIds::GRASS_PATH][5] = [BlockLegacyIds::END_ROD, 4];
+		$tempMap[BlockLegacyIds::GRASS_PATH][2] = [BlockLegacyIds::END_ROD, 3];
+		$tempMap[BlockLegacyIds::GRASS_PATH][3] = [BlockLegacyIds::END_ROD, 2];
+		$tempMap[BlockLegacyIds::GRASS_PATH][4] = [BlockLegacyIds::END_ROD, 5];
+		$tempMap[BlockLegacyIds::GRASS_PATH][5] = [BlockLegacyIds::END_ROD, 4];
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::ITEM_FRAME_BLOCK][$i] = [BlockLegacyIds::CHORUS_PLANT, $i];
+			$tempMap[BlockLegacyIds::ITEM_FRAME_BLOCK][$i] = [BlockLegacyIds::CHORUS_PLANT, $i];
 		}
 
 		for($i = 0; $i <= 7; $i++){
-			$this->map[BlockLegacyIds::FROSTED_ICE][$i] = [BlockLegacyIds::BEETROOT_BLOCK, $i];
+			$tempMap[BlockLegacyIds::FROSTED_ICE][$i] = [BlockLegacyIds::BEETROOT_BLOCK, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[210][$i] = [BlockLegacyIds::REPEATING_COMMAND_BLOCK, $i];
+			$tempMap[210][$i] = [BlockLegacyIds::REPEATING_COMMAND_BLOCK, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[211][$i] = [BlockLegacyIds::CHAIN_COMMAND_BLOCK, $i];
+			$tempMap[211][$i] = [BlockLegacyIds::CHAIN_COMMAND_BLOCK, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::SHULKER_BOX][$i] = [BlockLegacyIds::OBSERVER, $i];
+			$tempMap[BlockLegacyIds::SHULKER_BOX][$i] = [BlockLegacyIds::OBSERVER, $i];
 		}
 
 		//Glazed terracotta to shulker box
 		for($i = BlockLegacyIds::PURPLE_GLAZED_TERRACOTTA; $i <= BlockLegacyIds::RED_GLAZED_TERRACOTTA; $i++){
 			if($i === BlockLegacyIds::CYAN_GLAZED_TERRACOTTA){
 				for($k = 0; $k <= 15; $k++){
-					$this->map[$i][$k] = [BlockLegacyIds::UNDYED_SHULKER_BOX, $j];
+					$tempMap[$i][$k] = [BlockLegacyIds::UNDYED_SHULKER_BOX, $j];
 				}
 			}else{
 				for($k = 0; $k <= 15; $k++){
-					$this->map[$i][$k] = [BlockLegacyIds::SHULKER_BOX, $j];
+					$tempMap[$i][$k] = [BlockLegacyIds::SHULKER_BOX, $j];
 				}
 			}
 			$j++;
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::OBSERVER][$i] = [BlockLegacyIds::CONCRETE, $i];
+			$tempMap[BlockLegacyIds::OBSERVER][$i] = [BlockLegacyIds::CONCRETE, $i];
 		}
 
 		for($i = 0; $i <= 15; $i++){
-			$this->map[BlockLegacyIds::STRUCTURE_BLOCK][$i] = [BlockLegacyIds::CONCRETE_POWDER, $i];
+			$tempMap[BlockLegacyIds::STRUCTURE_BLOCK][$i] = [BlockLegacyIds::CONCRETE_POWDER, $i];
 		}
 
-		foreach($this->map as $javaId => $javaData){
+		foreach($tempMap as $javaId => $javaData){
 			foreach($javaData as $javaMeta => $bedrockData){
 				$bedrockId = (int) $bedrockData[0];
 				$bedrockMeta = (int) $bedrockData[1];
 
-				$this->map[self::toFullBlockId($javaId, $javaMeta)] = self::toFullBlockId($bedrockId, $bedrockMeta);
+				$this->map[Utils::toFullBlockId($javaId, $javaMeta)] = Utils::toFullBlockId($bedrockId, $bedrockMeta);
 			}
 		}
 	}

@@ -12,6 +12,7 @@ use pocketmine\block\BaseSign;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\utils\SignText;
+use pocketmine\command\CommandSender;
 use pocketmine\plugin\PluginException;
 use pocketmine\Server;
 use pocketmine\utils\Filesystem;
@@ -45,21 +46,30 @@ abstract class WorldTranslator{
 
 	public function __construct(
 		private Main $plugin,
+		private CommandSender $sender,
 		private World $world,
 		private BlocksTranslationMap $translationMap){
 
 		$this->worldName = $this->world->getFolderName();
+
+		if(!$this->checkProvider()){
+			throw new PluginException("Unsupported world provider");
+		}
 	}
 
-	public function getWorld() : World{
+	abstract protected function checkProvider() : bool;
+
+	final public function getWorld() : World{
 		return $this->world;
 	}
 
 	public function backup() : bool{
-		if(!Server::getInstance()->getWorldManager()->unloadWorld($this->world, true)){
+		$worldManager = Server::getInstance()->getWorldManager();
+		$isDefault = $worldManager->getDefaultWorld()?->getFolderName() === $this->worldName;
+
+		if(!$worldManager->unloadWorld($this->world, true)){
 			return false;
 		}
-
 
 		$srcPath = Path::join(Server::getInstance()->getDataPath(), "worlds", $this->worldName);
 
@@ -71,32 +81,40 @@ abstract class WorldTranslator{
 
 		Filesystem::recursiveCopy($srcPath, $backupPath);
 
-
-		if(!Server::getInstance()->getWorldManager()->loadWorld($this->worldName)){
+		if(!$worldManager->loadWorld($this->worldName)){
 			$this->plugin->getLogger()->warning("Could not load world \"$this->worldName\"");
 
 			return false;
 		}
 
+		$this->world = $worldManager->getWorldByName($this->worldName);
+		if($this->world === null){
+			throw new PluginException();
+		}
+
+		if($isDefault){
+			$worldManager->setDefaultWorld($this->world);
+		}
+
 		return true;
 	}
 
-	public function isRunning() : bool{
+	final public function isRunning() : bool{
 		return $this->running;
 	}
 
-	public function hasBeenExecuted() : bool{
+	final public function hasBeenExecuted() : bool{
 		return $this->executed;
 	}
 
-	public function translate() : self{
+	final public function translate() : self{
 		$this->error = false;
 		$this->executed = false;
 		$this->running = true;
 
-		$this->plugin->getLogger()->info("Starting world \"$this->worldName\" conversion.");
+		$this->sender->sendMessage("Starting world \"$this->worldName\" conversion.");
 
-		foreach($this->world->getPlayers() as $player){
+		foreach(Server::getInstance()->getOnlinePlayers() as $player){
 			$player->kick("The server is running a world conversion, try to join later.");
 		}
 
@@ -105,7 +123,7 @@ abstract class WorldTranslator{
 		try{
 			$this->onTranslate();
 		}catch(Exception $e){
-			$this->plugin->getLogger()->critical($e);
+			$this->sender->sendMessage(TextFormat::RED . $e->__toString());
 			$this->error = true;
 		}
 
@@ -124,46 +142,50 @@ abstract class WorldTranslator{
 			throw new PluginException("Could not print report before the execution.");
 		}
 
-		$this->plugin->getLogger()->info(TextFormat::LIGHT_PURPLE . "--- Conversion Report ---");
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Status: " . (!$this->error ? TextFormat::DARK_GREEN . "Completed" : TextFormat::RED . "Aborted"));
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->worldName);
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Execution time: " . TextFormat::GREEN . "$this->executionTime second(s)");
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Total chunks: " . TextFormat::GREEN . $this->totalChunks);
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Corrupted chunks: " . TextFormat::GREEN . $this->corruptedChunks);
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Chunks converted: " . TextFormat::GREEN . $this->translatedChunks);
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $this->translatedBlocks);
-		$this->plugin->getLogger()->info(TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $this->translatedSigns);
-		$this->plugin->getLogger()->info(TextFormat::LIGHT_PURPLE . "----------");
+		$this->sender->sendMessage(TextFormat::LIGHT_PURPLE . "--- Conversion Report ---");
+		$this->sender->sendMessage(TextFormat::AQUA . "Status: " . (!$this->error ? TextFormat::DARK_GREEN . "Completed" : TextFormat::RED . "Aborted"));
+		$this->sender->sendMessage(TextFormat::AQUA . "World name: " . TextFormat::GREEN . $this->worldName);
+		$this->sender->sendMessage(TextFormat::AQUA . "Execution time: " . TextFormat::GREEN . "$this->executionTime second(s)");
+		$this->sender->sendMessage(TextFormat::AQUA . "Total chunks: " . TextFormat::GREEN . $this->totalChunks);
+		$this->sender->sendMessage(TextFormat::AQUA . "Corrupted chunks: " . TextFormat::GREEN . $this->corruptedChunks);
+		$this->sender->sendMessage(TextFormat::AQUA . "Chunks converted: " . TextFormat::GREEN . $this->translatedChunks);
+		$this->sender->sendMessage(TextFormat::AQUA . "Blocks converted: " . TextFormat::GREEN . $this->translatedBlocks);
+		$this->sender->sendMessage(TextFormat::AQUA . "Signs converted: " . TextFormat::GREEN . $this->translatedSigns);
+		$this->sender->sendMessage(TextFormat::LIGHT_PURPLE . "----------");
 
 		return $this;
 	}
 
-	public function getTotalChunks() : int{
+	final public function getTotalChunks() : int{
 		return $this->totalChunks;
 	}
 
-	public function getExecutionTime() : int{
+	final public function getExecutionTime() : int{
 		return $this->executionTime;
 	}
 
-	public function getTranslatedBlocks() : int{
+	final public function getTranslatedBlocks() : int{
 		return $this->translatedBlocks;
 	}
 
-	public function getTranslatedChunks() : int{
+	final public function getTranslatedChunks() : int{
 		return $this->translatedChunks;
 	}
 
-	public function getTranslatedSigns() : int{
+	final public function getTranslatedSigns() : int{
 		return $this->translatedSigns;
 	}
 
-	public function getCorruptedChunks() : int{
+	final public function getCorruptedChunks() : int{
 		return $this->corruptedChunks;
 	}
 
-	public function hasErrors() : bool{
+	final public function hasErrors() : bool{
 		return $this->error;
+	}
+
+	final protected function getSender() : CommandSender{
+		return $this->sender;
 	}
 
 	final protected function translateChunk(int $chunkX, int $chunkZ) : void{

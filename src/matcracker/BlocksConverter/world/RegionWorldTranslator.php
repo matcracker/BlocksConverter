@@ -14,7 +14,6 @@ use Webmozart\PathUtil\Path;
 final class RegionWorldTranslator extends WorldTranslator{
 
 	protected function onTranslate() : void{
-
 		foreach($this->createRegionIterator() as [$regionX, $regionZ]){
 			$rX = $regionX << 5;
 			$rZ = $regionZ << 5;
@@ -37,16 +36,20 @@ final class RegionWorldTranslator extends WorldTranslator{
 		);
 	}
 
-	private function getWorldExtension() : ?string{
+	private function getWorldExtension() : string{
 		$provider = $this->getWorld()->getProvider();
 		if($provider instanceof Anvil){
 			return "mca";
 		}else if($provider instanceof McRegion){
 			return "mcr";
-		}else if($provider instanceof PMAnvil){
+		}else{
 			return "mcapm";
 		}
+	}
 
-		return null;
+	protected function checkProvider() : bool{
+		$provider = $this->getWorld()->getProvider();
+
+		return $provider instanceof Anvil || $provider instanceof McRegion || $provider instanceof PMAnvil;
 	}
 }
