@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter\world;
+namespace matcracker\BlocksConverter\translator;
 
 use Exception;
 use matcracker\BlocksConverter\Main;
-use matcracker\BlocksConverter\translationMaps\BlocksTranslationMap;
+use matcracker\BlocksConverter\translator\maps\BlocksTranslationMap;
 use matcracker\BlocksConverter\utils\Utils;
 use pocketmine\block\BaseSign;
 use pocketmine\block\BlockFactory;
@@ -22,6 +22,8 @@ use pocketmine\world\format\SubChunk;
 use pocketmine\world\World;
 use Webmozart\PathUtil\Path;
 use function file_exists;
+use function get_class;
+use function in_array;
 use function is_array;
 use function json_decode;
 use function microtime;
@@ -52,12 +54,15 @@ abstract class WorldTranslator{
 
 		$this->worldName = $this->world->getFolderName();
 
-		if(!$this->checkProvider()){
+		if(!in_array(get_class($this->world->getProvider()), $this->getAllowedProviders())){
 			throw new PluginException("Unsupported world provider");
 		}
 	}
 
-	abstract protected function checkProvider() : bool;
+	/**
+	 * @return array<mixed, string>
+	 */
+	abstract protected function getAllowedProviders() : array;
 
 	final public function getWorld() : World{
 		return $this->world;
@@ -202,7 +207,7 @@ abstract class WorldTranslator{
 
 		for($y = $this->world->getMinY(); $y < $this->world->getMaxY(); $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
-			if($subChunk->isEmptyFast()){
+			if($subChunk->isEmptyAuthoritative()){
 				continue;
 			}
 

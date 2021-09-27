@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace matcracker\BlocksConverter\commands;
 
 use matcracker\BlocksConverter\Main;
-use matcracker\BlocksConverter\world\WorldQueue;
+use matcracker\BlocksConverter\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
@@ -43,11 +43,13 @@ final class ConvertQueue extends Command implements PluginOwned{
 
 		$action = strtolower($args[0]);
 
+		/** @var WorldQueue $worldQueue */
+		$worldQueue = WorldQueue::getInstance();
+
 		if($action === "status"){
-			if(!WorldQueue::isEmpty()){
+			if($worldQueue->count($sender) > 0){
 				$sender->sendMessage(TextFormat::GOLD . "Worlds in queue:");
-				$queued = WorldQueue::getAll();
-				foreach($queued as $worldName => $_){
+				foreach($worldQueue->getAllWorlds($sender) as $worldName => $world){
 					$sender->sendMessage(TextFormat::AQUA . "- $worldName");
 				}
 			}else{
@@ -86,25 +88,21 @@ final class ConvertQueue extends Command implements PluginOwned{
 		if($action === "add"){
 			foreach($worlds as $world){
 				$worldName = $world->getFolderName();
-				if(WorldQueue::isPresent($world)){
+				if($worldQueue->add($sender, $world)){
+					$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been added in queue.");
+				}else{
 					$sender->sendMessage(TextFormat::RED . "World \"$worldName\" is already in queue!");
-					continue;
 				}
-
-				WorldQueue::add($world);
-				$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been added in queue.");
 			}
 
 		}elseif($action === "remove"){
 			foreach($worlds as $world){
 				$worldName = $world->getFolderName();
-				if(!WorldQueue::isPresent($world)){
+				if($worldQueue->remove($sender, $world)){
+					$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been removed from the queue.");
+				}else{
 					$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" is not in queue.");
-					continue;
 				}
-
-				WorldQueue::remove($world);
-				$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been removed from the queue.");
 			}
 
 		}else{

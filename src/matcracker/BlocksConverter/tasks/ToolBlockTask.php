@@ -16,13 +16,13 @@ final class ToolBlockTask extends Task{
 		$players = ToolBlock::getPlayers();
 
 		if(count($players) === 0){
-			$this->getHandler()->cancel();
+			$this->getHandler()?->cancel();
 
 			return;
 		}
 
 		foreach($players as $player){
-			$block = $player->getTargetBlock(5);
+			$block = $player?->getTargetBlock(5);
 			if($block !== null && !($block instanceof Air)){
 				$pos = $block->getPosition();
 				$message = "{$block->getName()} (ID: {$block->getId()} Meta: {$block->getMeta()})" . TextFormat::EOL;

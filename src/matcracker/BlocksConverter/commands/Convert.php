@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace matcracker\BlocksConverter\commands;
 
 use matcracker\BlocksConverter\Main;
-use matcracker\BlocksConverter\translationMaps\RegionBlocksTranslationMap;
-use matcracker\BlocksConverter\world\LevelDBWorldTranslator;
-use matcracker\BlocksConverter\world\RegionWorldTranslator;
-use matcracker\BlocksConverter\world\WorldQueue;
+use matcracker\BlocksConverter\translator\maps\RegionBlocksTranslationMap;
+use matcracker\BlocksConverter\translator\LevelDBWorldTranslator;
+use matcracker\BlocksConverter\translator\RegionWorldTranslator;
+use matcracker\BlocksConverter\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
@@ -57,13 +57,15 @@ final class Convert extends Command implements PluginOwned{
 		$force = isset($args[3]) && filter_var($args[3], FILTER_VALIDATE_BOOLEAN);
 
 		if(strtolower($worldOption) === "queue"){
-			if(WorldQueue::isEmpty()){
+			/** @var WorldQueue $worldQueue */
+			$worldQueue = WorldQueue::getInstance();
+			if($worldQueue->count($sender) === 0){
 				$this->plugin->getLogger()->info("The queue is empty.");
 
 				return true;
 			}
 
-			$worlds = WorldQueue::getAll();
+			$worlds = $worldQueue->getAllWorlds($sender);
 		}else{
 			$worldManager = Server::getInstance()->getWorldManager();
 			if(!$worldManager->loadWorld($worldOption)){

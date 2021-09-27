@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter\translationMaps;
+namespace matcracker\BlocksConverter\translator\maps;
 
 use ArrayAccess;
 use ArrayIterator;

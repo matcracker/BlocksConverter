@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter\translationMaps;
+namespace matcracker\BlocksConverter\translator\maps;
 
 use matcracker\BlocksConverter\utils\Utils;
 use pocketmine\block\BlockLegacyIds;
@@ -306,10 +306,7 @@ final class RegionBlocksTranslationMap extends BlocksTranslationMap{
 		}
 
 		foreach($tempMap as $javaId => $javaData){
-			foreach($javaData as $javaMeta => $bedrockData){
-				$bedrockId = (int) $bedrockData[0];
-				$bedrockMeta = (int) $bedrockData[1];
-
+			foreach($javaData as $javaMeta => [$bedrockId, $bedrockMeta]){
 				$this->map[Utils::toFullBlockId($javaId, $javaMeta)] = Utils::toFullBlockId($bedrockId, $bedrockMeta);
 			}
 		}

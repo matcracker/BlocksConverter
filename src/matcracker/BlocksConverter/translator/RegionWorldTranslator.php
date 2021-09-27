@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter\world;
+namespace matcracker\BlocksConverter\translator;
 
 use FilesystemIterator;
 use pocketmine\world\format\io\region\Anvil;
@@ -47,9 +47,9 @@ final class RegionWorldTranslator extends WorldTranslator{
 		}
 	}
 
-	protected function checkProvider() : bool{
-		$provider = $this->getWorld()->getProvider();
-
-		return $provider instanceof Anvil || $provider instanceof McRegion || $provider instanceof PMAnvil;
+	protected function getAllowedProviders() : array{
+		return [
+			Anvil::class, McRegion::class, PMAnvil::class
+		];
 	}
 }

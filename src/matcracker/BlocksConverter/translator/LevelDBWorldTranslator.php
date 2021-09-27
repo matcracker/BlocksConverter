@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace matcracker\BlocksConverter\world;
+namespace matcracker\BlocksConverter\translator;
 
 use pocketmine\utils\Binary;
 use pocketmine\world\format\io\leveldb\LevelDB;
@@ -22,7 +22,7 @@ final class LevelDBWorldTranslator extends WorldTranslator{
 		}
 	}
 
-	protected function checkProvider() : bool{
-		return $this->getWorld()->getProvider() instanceof LevelDB;
+	protected function getAllowedProviders() : array{
+		return [LevelDB::class];
 	}
 }
