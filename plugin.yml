@@ -1,6 +1,6 @@
 name: BlocksConverter
 version: 3.0.0
-api: 4.0.0-BETA2
+api: 4.0.0-BETA12
 author: matcracker
 main: matcracker\BlocksConverter\Main
 

@@ -8,9 +8,9 @@ use Exception;
 use matcracker\BlocksConverter\Main;
 use matcracker\BlocksConverter\translator\maps\BlocksTranslationMap;
 use matcracker\BlocksConverter\utils\Utils;
+use pocketmine\block\Air;
 use pocketmine\block\BaseSign;
 use pocketmine\block\BlockFactory;
-use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\utils\SignText;
 use pocketmine\command\CommandSender;
 use pocketmine\plugin\PluginException;
@@ -204,28 +204,33 @@ abstract class WorldTranslator{
 		}
 
 		$hasChanged = false;
+		/** @var BlockFactory $factory */
+		$factory = BlockFactory::getInstance();
 
 		for($y = $this->world->getMinY(); $y < $this->world->getMaxY(); $y++){
-			$subChunk = $chunk->getSubChunk($y >> 4);
+			$subChunk = $chunk->getSubChunk($y >> SubChunk::COORD_BIT_SIZE);
 			if($subChunk->isEmptyAuthoritative()){
 				continue;
 			}
 
-			for($x = 0; $x < Chunk::MAX_SUBCHUNKS; $x++){
-				for($z = 0; $z < Chunk::MAX_SUBCHUNKS; $z++){
-					$fullBlockId = $subChunk->getFullBlock($x, $y & SubChunk::COORD_MASK, $z);
-					if($fullBlockId === BlockLegacyIds::AIR){ //Full block ID of Air is always 0
+			$cx = $chunkX << Chunk::COORD_BIT_SIZE;
+			$cz = $chunkZ << Chunk::COORD_BIT_SIZE;
+			$maxChunkX = $cx + Chunk::MAX_SUBCHUNKS;
+			$maxChunkZ = $cz + Chunk::MAX_SUBCHUNKS;
+
+			for($x = $cx; $x < $maxChunkX; $x++){
+				for($z = $cz; $z < $maxChunkZ; $z++){
+					$oldBlock = $this->world->getBlockAt($x, $y, $z, addToCache: false);
+					if($oldBlock instanceof Air){
 						continue;
 					}
 
-					$block = BlockFactory::getInstance()->fromFullBlock($fullBlockId);
-
 					//At the moment support sign conversion only from java to bedrock
-					if($block instanceof BaseSign){
+					if($oldBlock instanceof BaseSign){
 						$this->plugin->getLogger()->debug("Found a chunk[$chunkX;$chunkZ] containing signs...");
 						$lines = ["", "", "", ""];
 
-						foreach($block->getText()->getLines() as $index => $line){
+						foreach($oldBlock->getText()->getLines() as $index => $line){
 							$data = json_decode($line, true);
 							if(is_array($data)){
 								if(isset($data["extra"])){
@@ -239,19 +244,24 @@ abstract class WorldTranslator{
 							}
 						}
 
-						$block->setText(new SignText($lines));
+						$oldBlock->setText(new SignText($lines));
+						$oldBlock->writeStateToWorld();
 
 						$hasChanged = true;
 						$this->translatedSigns++;
 					}else{
-						if(!isset($this->translationMap[$fullBlockId])){
+						$oldId = $oldBlock->getId();
+						$oldMeta = $oldBlock->getMeta();
+						if(!isset($this->translationMap[$oldId][$oldMeta])){
 							continue;
 						}
 
-						$newBlock = BlockFactory::getInstance()->fromFullBlock($this->translationMap[$fullBlockId]);
+						[$newId, $newMeta] = $this->translationMap[$oldId][$oldMeta];
 
-						$this->plugin->getLogger()->debug(sprintf("Replaced %d:%d (%s) with %d:%d (%s)", $block->getId(), $block->getMeta(), $block->getName(), $newBlock->getId(), $newBlock->getMeta(), $newBlock->getName()));
-						$subChunk->setFullBlock($x, $y & SubChunk::COORD_MASK, $z, $this->translationMap[$fullBlockId]);
+						$newBlock = $factory->get($newId, $newMeta);
+
+						$this->plugin->getLogger()->debug(sprintf("Replaced %d:%d (%s) with %d:%d (%s)", $oldId, $oldMeta, $oldBlock->getName(), $newId, $newMeta, $newBlock->getName()));
+						$this->world->setBlockAt($x, $y, $z, $newBlock, false);
 						$hasChanged = true;
 						$this->translatedBlocks++;
 					}

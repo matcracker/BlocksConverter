@@ -14,14 +14,15 @@ use function count;
 
 abstract class BlocksTranslationMap implements ArrayAccess, IteratorAggregate, Countable, JsonSerializable{
 
-	/** @var array<int, int> */
+	/** @var array<int, array<int, array<int, int>>>
+	 */
 	protected array $map;
 
 	final public function offsetExists(mixed $offset) : bool{
 		return isset($this->map[$offset]);
 	}
 
-	final public function offsetGet(mixed $offset) : int{
+	final public function offsetGet(mixed $offset) : array{
 		return $this->map[$offset];
 	}
 
